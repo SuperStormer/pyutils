@@ -1,5 +1,6 @@
 from itertools import zip_longest
 import math
+from numbers import Real, Integral
 from typing import TypeVar, List, Callable, Generator, Sequence, Union, Set, Any, Tuple
 T = TypeVar("T")
 
@@ -61,3 +62,9 @@ def pairings(sequence: List[E]) -> Generator[List[Tuple[E, E]], None, None]:
 		for i, element in enumerate(sequence[1:], start=1):
 			pair = (first_element, element)
 			yield from ([pair] + rest for rest in pairings(sequence[1:i] + sequence[i + 1:]))
+
+def round_half_up(num: Real) -> int:
+	return math.floor(num + 0.5)
+
+def clamp(num: Real, min_num: Real, max_num: Real) -> Real:
+	return max(min_num, min(max_num, num))
