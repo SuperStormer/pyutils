@@ -1,7 +1,9 @@
 from itertools import zip_longest
 import math
 from numbers import Real, Integral
-from typing import TypeVar, List, Callable, Generator, Sequence, Union, Set, Any, Tuple
+from functools import reduce, partial
+from typing import TypeVar, List, Callable, Generator, Sequence, Union, Set, Any, Tuple, Reversible
+from inspect import signature
 T = TypeVar("T")
 
 def merge_sequence(sequence: Sequence[T], merge_func: Callable[[T, T], T]) -> Generator[T, None, None]:
@@ -68,3 +70,17 @@ def round_half_up(num: Real) -> int:
 
 def clamp(num: Real, min_num: Real, max_num: Real) -> Real:
 	return max(min_num, min(max_num, num))
+
+A = TypeVar("A")
+
+def reduce_right(func: Callable[[A, A], A], sequence: Reversible, accumulator: A) -> A:
+	return reduce(lambda x, y: func(y, x), reversed(sequence), accumulator)
+
+def compose(*funcs):
+	def composed_func(args):
+		return reduce_right(lambda x, func: func(x), funcs, args)
+	
+	return composed_func
+
+def flip(func, *args):
+	return func(args[::-1])
