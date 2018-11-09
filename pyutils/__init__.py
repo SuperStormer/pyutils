@@ -1,13 +1,14 @@
-from itertools import zip_longest
+import itertools
 import math
 from numbers import Real, Integral
-from functools import reduce, partial
-from typing import TypeVar, List, Callable, Generator, Sequence, Union, Set, Any, Tuple, Reversible
+from functools import reduce, lru_cache
+from typing import TypeVar, List, Callable, Generator, Sequence, Union, Set, Any, Tuple, Reversible, Iterator
 from inspect import signature
+from string import digits, ascii_uppercase
 T = TypeVar("T")
 
 def merge_sequence(sequence: Sequence[T], merge_func: Callable[[T, T], T]) -> Generator[T, None, None]:
-	for element1, element2 in zip_longest(sequence[::2], sequence[1::2]):
+	for element1, element2 in itertools.zip_longest(sequence[::2], sequence[1::2]):
 		if not element2:
 			yield element1
 			continue
@@ -33,20 +34,20 @@ def optional_reduce(
 		return optional_reduce(new_sequence, merge_func)
 	return sorted_sequence
 
+_alphabet = tuple(digits + ascii_uppercase)
+
+@lru_cache(maxsize=None)
 def int_to_base(
 	integer: int,
 	base: int,
-	alphabet=[
-	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
-	'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
-	]
-) -> str:  #pylint: disable=dangerous-default-value
+) -> str:
 	base_str = ""
 	for i in range(math.floor(math.log(integer, base)), -1, -1):
-		base_str += alphabet[integer // (base**i)]
+		base_str += _alphabet[integer // (base**i)]
 		integer = integer % (base**i)
 	return base_str
 
+@lru_cache(maxsize=None)
 def is_palindrome(string: str) -> bool:
 	return string == "".join(reversed(string))
 
@@ -82,5 +83,44 @@ def compose(*funcs):
 	
 	return composed_func
 
-def flip(func, *args):
+def flip(func: Callable, *args):
 	return func(args[::-1])
+
+@lru_cache(maxsize=None)
+def is_prime(num):
+	if num == 2:
+		return True
+	if num == 1 or num == 0:
+		return False
+	if num % 2 == 0:
+		return False
+	for i in range(2, math.floor(math.sqrt(num)) + 1):
+		if num % i == 0:
+			return False
+	return True
+
+def palindromes(digits: int) -> Iterator[int]:
+	combos = itertools.product(range(0, 10), repeat=digits // 2)
+	str_combos = ("".join(map(str, combo)) for combo in combos)
+	if digits % 2 == 1:  #odd num of digits
+		return (
+			int(combo + str(middle_digit) + "".join(reversed(combo))) for combo in str_combos for middle_digit in range(0, 10)
+		)
+	else:
+		return (int(combo + "".join(reversed(combo))) for combo in str_combos)
+
+@lru_cache(maxsize=None)
+def fibonnaci(n: int) -> int:
+	if n < 2:
+		return n
+	return fibonnaci(n - 1) + fibonnaci(n - 2)
+
+def fibonnaci_gen(num: int) -> Generator[int, None, None]:
+	a = 1
+	b = 1
+	yield 1
+	yield 1
+	for _ in range(num - 2):
+		c = a + b
+		yield c
+		a, b = b, c
