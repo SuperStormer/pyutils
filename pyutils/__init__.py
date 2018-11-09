@@ -4,7 +4,7 @@ from numbers import Real, Integral
 from functools import reduce, lru_cache
 from typing import TypeVar, List, Callable, Generator, Sequence, Union, Set, Any, Tuple, Reversible, Iterator
 from inspect import signature
-from string import digits, ascii_uppercase
+from string import digits, ascii_uppercase, ascii_letters
 T = TypeVar("T")
 
 def merge_sequence(sequence: Sequence[T], merge_func: Callable[[T, T], T]) -> Generator[T, None, None]:
@@ -34,7 +34,7 @@ def optional_reduce(
 		return optional_reduce(new_sequence, merge_func)
 	return sorted_sequence
 
-_alphabet = tuple(digits + ascii_uppercase)
+_base_alphabet = tuple(digits + ascii_uppercase)
 
 @lru_cache(maxsize=None)
 def int_to_base(
@@ -43,7 +43,7 @@ def int_to_base(
 ) -> str:
 	base_str = ""
 	for i in range(math.floor(math.log(integer, base)), -1, -1):
-		base_str += _alphabet[integer // (base**i)]
+		base_str += _base_alphabet[integer // (base**i)]
 		integer = integer % (base**i)
 	return base_str
 
@@ -99,15 +99,15 @@ def is_prime(num):
 			return False
 	return True
 
-def palindromes(digits: int) -> Iterator[int]:
-	combos = itertools.product(range(0, 10), repeat=digits // 2)
-	str_combos = ("".join(map(str, combo)) for combo in combos)
-	if digits % 2 == 1:  #odd num of digits
-		return (
-			int(combo + str(middle_digit) + "".join(reversed(combo))) for combo in str_combos for middle_digit in range(0, 10)
-		)
+def palindromes(length: int, possible_chars=ascii_letters) -> Iterator[str]:
+	combos = map("".join, itertools.product(possible_chars, repeat=length // 2))
+	if length % 2 == 1:  #odd num of digits
+		return (combo + str(middle_char) + "".join(reversed(combo)) for combo in combos for middle_char in possible_chars)
 	else:
-		return (int(combo + "".join(reversed(combo))) for combo in str_combos)
+		return (combo + "".join(reversed(combo)) for combo in combos)
+
+def palindrome_nums(length):
+	return map(int, palindromes(length, possible_chars=digits))
 
 @lru_cache(maxsize=None)
 def fibonnaci(n: int) -> int:
@@ -124,3 +124,10 @@ def fibonnaci_gen(num: int) -> Generator[int, None, None]:
 		c = a + b
 		yield c
 		a, b = b, c
+
+def factors(num: int) -> Set[int]:
+	step = 2 if num % 2 else 1
+	return set(
+		itertools.chain.from_iterable((i, num // i) for i in range(1,
+		math.floor(math.sqrt(num)) + 1, step) if num % i == 0)
+	)
