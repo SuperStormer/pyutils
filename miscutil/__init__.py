@@ -5,6 +5,7 @@ from functools import reduce, lru_cache
 from typing import TypeVar, List, Callable, Generator, Sequence, Union, Set, Any, Tuple, Reversible, Iterator
 from inspect import signature
 from string import digits, ascii_uppercase, ascii_letters
+import itertools2
 T = TypeVar("T")
 
 def merge_sequence(sequence: Sequence[T], merge_func: Callable[[T, T], T]) -> Generator[T, None, None]:
