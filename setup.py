@@ -1,9 +1,13 @@
-from setuptools import setup, find_packages
-setup(
+import setuptools
+with open("README.md", "r") as f:
+	long_description = f.read()
+setuptools.setup(
 	name="miscutil",
 	version="0.6",
 	descripton="my util functions for python",
-	packages=find_packages(),
+	long_description=long_description,
+	long_description_content_type="text/markdown",
+	packages=setuptools.find_packages(),
 	license="GPLv3",
 	author="SuperStormer",
 	author_email="larry.p.xue@gmail.com",

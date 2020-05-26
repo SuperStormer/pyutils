@@ -1,3 +1,4 @@
+#TODO clean this up
 import itertools
 import math
 from numbers import Real, Integral
@@ -5,7 +6,6 @@ from functools import reduce, lru_cache
 from typing import TypeVar, List, Callable, Generator, Sequence, Union, Set, Any, Tuple, Reversible, Iterator
 from inspect import signature
 from string import digits, ascii_uppercase, ascii_letters
-import itertools2
 T = TypeVar("T")
 
 def merge_sequence(sequence: Sequence[T], merge_func: Callable[[T, T], T]) -> Generator[T, None, None]:
@@ -21,7 +21,9 @@ def merge_sequence(sequence: Sequence[T], merge_func: Callable[[T, T], T]) -> Ge
 			yield element2
 
 def optional_reduce(
-	original_sequence: Union[Sequence[T], Set[T]], merge_func: Callable[[T, T], T], key_func: Callable[[T], Any] = lambda x: x
+	original_sequence: Union[Sequence[T], Set[T]],
+	merge_func: Callable[[T, T], T],
+	key_func: Callable[[T], Any] = lambda x: x
 ) -> List[T]:
 	sorted_sequence = sorted(original_sequence, key=key_func)
 	new_sequence = min(
