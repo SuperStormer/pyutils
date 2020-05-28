@@ -20,4 +20,4 @@ def factors(n: int) -> List[int]:
 	return fetch_result(n).factors
 
 if __name__ == "__main__":
-	print(factors(sys.argv[1]))
+	print(factors(int(sys.argv[1])))

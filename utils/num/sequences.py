@@ -1,3 +1,4 @@
+import itertools
 
 def triangular_nums():
 	n = 0

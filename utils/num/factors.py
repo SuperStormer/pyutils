@@ -49,6 +49,10 @@ def proper_divisors(n):
 def is_abundant(n):
 	return sum(proper_divisors(n)) > n
 
+def factors(n):
+	yield from proper_divisors(n)
+	yield n
+
 def num_factors(n):
 	factors = Counter(prime_factors(n))
 	return math.prod(c + 1 for c in factors.values())
