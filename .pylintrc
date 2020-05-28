@@ -11,12 +11,12 @@ enable=similarities
 [BASIC]
 
 [FORMAT]
-max-line-length=100
+max-line-length=130
 # e for error; f for file; fn for function
-good-names=i,j,k,x,y,n,s,e,f,fn
+good-names=i,j,k,x,y,e,f,fn
 indent-string="\t"
 # allows global variables to be normal
-const-rgx=[a-zA-Z_][a-zA-Z0-9_]{2,30}$ 
+const-rgx=[a-zA-Z_][a-zA-Z0-9_]{2,30}$
 [LOGGING]
 
 [MISCELLANEOUS]

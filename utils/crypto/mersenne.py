@@ -1,4 +1,4 @@
-from xor import xor
+from .xor import xor
 
 class MersenneTwister:
 	def __init__(self):
@@ -18,7 +18,9 @@ class MersenneTwister:
 		self.index = self.n
 		self.mt[0] = seed
 		for i in range(1, self.n):
-			self.mt[i] = lowest_bits(self.f * (self.mt[i - 1] ^ (self.mt[i - 1] >> (self.w - 2))) + i, self.w)
+			self.mt[i] = lowest_bits(
+				self.f * (self.mt[i - 1] ^ (self.mt[i - 1] >> (self.w - 2))) + i, self.w
+			)
 	
 	def rand(self):
 		if self.index >= self.n:

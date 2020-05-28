@@ -4,7 +4,7 @@ import itertools
 import struct
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
-from xor import xor
+from .xor import xor
 
 def grouper(iterable, n, fillvalue=None):
 	args = [iter(iterable)] * n
