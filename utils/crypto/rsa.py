@@ -1,4 +1,5 @@
 from .misc import long_to_bytes, bytes_to_long
+import math
 
 def modinv(a, m):
 	return pow(a, -1, m)
@@ -23,6 +24,19 @@ def decrypt_to_str(c, e, n, p, q=None):
 
 def encrypt_str(m, e, n):
 	return encrypt(bytes_to_long(m), e, n)
+
+def multi_prime_totient(*args):
+	return math.prod(c - 1 for c in args)
+
+def multi_prime_find_d(e, *primes):
+	return modinv(e, multi_prime_totient(*primes))
+
+def multi_prime_decrypt(c, e, n, *primes):
+	d = multi_prime_find_d(e, *primes)
+	return pow(c, d, n)
+
+def multi_prime_decrypt_to_str(c, e, n, *primes):
+	return long_to_bytes(multi_prime_decrypt(c, e, n, *primes))
 
 #used for rsa problems where m^e < n meaning to decrypt c you can just do find_invpow(c,e)
 #from https://stackoverflow.com/q/55436001/7941251
