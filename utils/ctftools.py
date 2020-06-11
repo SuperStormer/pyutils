@@ -3,18 +3,7 @@ import os
 import pickle
 import string
 import time
-from ctypes import CDLL
 import requests
-
-def format_str_bruteforce(n=100):
-	for i in range(n):
-		yield f"%{i}$s\n"
-
-def libc_rand():
-	libc = CDLL("libc.so.6")
-	libc.srand(libc.time(None))
-	while True:
-		yield libc.rand()
 
 def caesar(s, alphabet_only=True):
 	if alphabet_only:
