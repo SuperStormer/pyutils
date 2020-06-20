@@ -1,4 +1,5 @@
 from .xor import xor
+from ..bits import lowest_bits
 
 class MersenneTwister:
 	def __init__(self):
@@ -43,9 +44,6 @@ class MersenneTwister:
 				xA = xA ^ self.a
 			self.mt[i] = self.mt[(i + self.m) % self.n] ^ xA
 		self.index = 0
-
-def lowest_bits(n, k):
-	return n & ((1 << k) - 1)
 
 #both funcs below from https://cypher.codes/writing/cryptopals-challenge-set-3
 def unshift_right_xor(value, shift):

