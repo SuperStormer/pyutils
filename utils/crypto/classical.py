@@ -7,7 +7,7 @@ def caesar_all(s, alphabet_only=True):
 	if alphabet_only:
 		return ((caesar(s, i, alphabet_only), i) for i in range(26))
 	else:  #full ascii
-		return ((caesar(s, i, alphabet_only).i) for i in range(128))
+		return ((caesar(s, i, alphabet_only), i) for i in range(128))
 
 def caesar(s, shift, alphabet_only=True):
 	if alphabet_only:
