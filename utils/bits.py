@@ -1,4 +1,3 @@
-
 #from https://www.falatic.com/index.php/108/python-and-bitwise-rotation
 #rotate left
 def rol(val, r_bits, max_bits):
@@ -7,7 +6,7 @@ def rol(val, r_bits, max_bits):
 		((val & (2**max_bits - 1)) >> (max_bits - (r_bits % max_bits)))
 	)
 
-# Rotate right
+#rotate right
 def ror(val, r_bits, max_bits):
 	return (
 		((val & (2**max_bits - 1)) >> r_bits % max_bits) |
@@ -15,4 +14,4 @@ def ror(val, r_bits, max_bits):
 	)
 
 def lowest_bits(n, k):
-    return n & ((1 << k) - 1)
+	return n & ((1 << k) - 1)

