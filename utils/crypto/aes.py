@@ -131,7 +131,7 @@ def decrypt_cbc_padding_oracle(ct, iv, padding_oracle):
 	return unpad_pkcs7(b"".join(pt_blocks))
 
 def decrypt_fixed_nonce_ctr(strs):
-	# see cryptopals
+	# see cryptopals #20
 	blocks_lists = [grouper(s, 16, 0) for s in strs]
 	transposed_blocks = zip(*blocks_lists)
 	plaintexts = [b"" for _ in range(len(strs))]

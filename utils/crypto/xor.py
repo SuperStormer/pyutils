@@ -35,5 +35,5 @@ def repeating_key_xor_all(s, min_len=2, max_len=40, keysizes_to_try=3):
 def decrypt_repeating_key_xor(s, min_len=2, max_len=40, keysizes_to_try=3):
 	return max(
 		repeating_key_xor_all(s, min_len, max_len, keysizes_to_try),
-		key=lambda x: english_like(x[0].decode("utf-8"))
+		key=lambda x: english_like(x[0].decode("utf-8", errors="ignore"))
 	)
