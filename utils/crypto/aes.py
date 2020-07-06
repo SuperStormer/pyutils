@@ -111,9 +111,10 @@ def decrypt_ecb_suffix(oracle):
 
 #var names from https://robertheaton.com/2013/07/29/padding-oracle-attack/
 #sometimes messes up on the last block in case it accidentally gets the correct padding
-def decrypt_cbc_padding_oracle(ct, iv, padding_oracle):
+def decrypt_cbc_padding_oracle(padding_oracle, ct, iv=None):
 	blocks = list(map(bytes, grouper(ct, 16)))
-	blocks.insert(0, iv)
+	if iv is not None:
+		blocks.insert(0, iv)
 	pt_blocks = []
 	for c1, c2 in zip(blocks, blocks[1:]):
 		pt_block = bytearray()  # reversed
@@ -144,3 +145,10 @@ def decrypt_fixed_nonce_ctr(strs):
 		for i, part in enumerate(plaintext_parts):
 			plaintexts[i] += bytes(part)
 	return plaintexts
+
+def extract_cbc_iv(s, oracle):
+	# see https://github.com/ashutosh1206/Crypton/tree/master/Block-Cipher/CBC-IV-Detection
+	# or cryptopals 27
+	modified = s[:16] + b"\x00" * 16 + s[:16]
+	plaintext = oracle(modified)
+	return xor(plaintext[:16], plaintext[-16:])

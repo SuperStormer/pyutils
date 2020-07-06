@@ -2,7 +2,7 @@ import math
 import secrets
 
 from .misc import long_to_bytes, bytes_to_long
-from ..num.misc import lcm
+from ..num.ntheory import lcm
 """ https://en.wikipedia.org/wiki/Paillier_cryptosystem """
 
 def L(x, n):

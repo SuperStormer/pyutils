@@ -1,10 +1,9 @@
 import math
+import random
 
 from .misc import bytes_to_long, long_to_bytes
 from Crypto.Util.number import getPrime
-
-def modinv(a, m):
-	return pow(a, -1, m)
+from ..num.ntheory import modinv, crt
 
 def find_d(e, p, q):
 	return modinv(e, totient(p, q))
@@ -49,7 +48,7 @@ def gen_keypair(key_len, e=3):
 	n = p * q
 	return (e, n, p, q)
 
-#used for rsa problems where m^e < n meaning to decrypt c you can just do find_invpow(c,e)
+#used for rsa problems where m^e < n meaning to decrypt c you can just do invpow(c,e)
 #from https://stackoverflow.com/q/55436001/7941251
 def invpow(x, n):
 	"""Finds the integer component of the n'th root of x,
@@ -68,3 +67,14 @@ def invpow(x, n):
 		else:
 			return mid
 	return mid + 1
+
+def hastad_broadcast_attack(cts, n_s, e):
+	# see cryptopals 40
+	return invpow(crt(cts, n_s), e)
+
+def decrypt_unpadded_oracle(c, n, e, oracle):
+	# see cryptopals 41
+	s = random.randint(2, n - 1)
+	c_prime = (pow(s, e, n) * c) % n
+	p_prime = oracle(c_prime)
+	return (p_prime * modinv(s, n)) % n
