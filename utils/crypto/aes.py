@@ -2,6 +2,7 @@ import os
 import math
 import itertools
 import struct
+import base64
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from .xor import xor, decrypt_repeating_key_xor
@@ -152,3 +153,10 @@ def extract_cbc_iv(s, oracle):
 	modified = s[:16] + b"\x00" * 16 + s[:16]
 	plaintext = oracle(modified)
 	return xor(plaintext[:16], plaintext[-16:])
+
+def decrypt_active_dir_gpo(s):
+	return aes_ecb(
+		base64.b64decode(s),
+		b'\x4e\x99\x06\xe8\xfc\xb6\x6c\xc9\xfa\xf4\x93\x10\x62\x0f\xfe\xe8\xf4\x96\xe8\x06\xcc\x05\x79\x90\x20\x9b\x09\xa4\x33\xb6\x6c\x1b',
+		"decrypt"
+	).replace(b"\x00", b"").strip()

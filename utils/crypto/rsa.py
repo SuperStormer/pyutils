@@ -3,7 +3,7 @@ import random
 
 from .misc import bytes_to_long, long_to_bytes
 from Crypto.Util.number import getPrime
-from ..num.ntheory import modinv, crt
+from ..num.ntheory import modinv, crt, egcd
 
 def find_d(e, p, q):
 	return modinv(e, totient(p, q))
@@ -78,3 +78,8 @@ def decrypt_unpadded_oracle(c, n, e, oracle):
 	c_prime = (pow(s, e, n) * c) % n
 	p_prime = oracle(c_prime)
 	return (p_prime * modinv(s, n)) % n
+
+def common_mod_attack(c1, c2, e1, e2, n):
+	gcd, a, b = egcd(e1, e2)
+	ct = (pow(c1, a, n) * pow(c2, b, n)) % n
+	return invpow(ct, gcd)
