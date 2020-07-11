@@ -12,5 +12,6 @@ setuptools.setup(
 	author="SuperStormer",
 	author_email="larry.p.xue@gmail.com",
 	url="https://github.com/SuperStormer/pyutils",
-	project_urls={"Source Code": "https://github.com/SuperStormer/pyutils"}
+	project_urls={"Source Code": "https://github.com/SuperStormer/pyutils"},
+	scripts=["scripts/caesar.py"]
 )

@@ -21,8 +21,7 @@ def pad_pkcs7(s, block_size=16):
 
 def unpad_pkcs7(s, block_size=16):
 	pad_length = s[-1]
-	padding = s[-pad_length:]
-	if all(c == padding[0] for c in padding):
+	if all(c == pad_length for c in s[-pad_length:]):
 		return s[:-pad_length]
 	else:
 		raise ValueError(f"Invalid PKCS#7 padding on {s!r}")
