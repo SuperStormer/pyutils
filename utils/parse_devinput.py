@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 #based on https://ctftime.org/writeup/21148
-#TODO: fix alt gr handling
-import struct
 import string
+import struct
+
 from .keycodes import key_codes
 """
 FORMAT represents the format used by linux kernel input event struct
