@@ -7,7 +7,7 @@ from typing import Union, Tuple, Optional
 
 def send_email(
 	sender_email: str,
-	receiver_emails: Union[Tuple[str], str],
+	receiver_emails: Union[Tuple[str, ...], str],
 	password: str,
 	subject: str,
 	content: str,
