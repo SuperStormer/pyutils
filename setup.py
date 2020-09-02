@@ -1,4 +1,5 @@
 import setuptools
+import glob
 with open("README.md", "r") as f:
 	long_description = f.read()
 setuptools.setup(
@@ -13,6 +14,6 @@ setuptools.setup(
 	author_email="larry.p.xue@gmail.com",
 	url="https://github.com/SuperStormer/pyutils",
 	project_urls={"Source Code": "https://github.com/SuperStormer/pyutils"},
-	scripts=["scripts/caesar.py"],
+	scripts=glob.glob("scripts/*.py"),
 	install_requires=["pycryptodome>=3.9.8", "cryptography>=2.9.2", "requests>=2.24.0"]
 )

