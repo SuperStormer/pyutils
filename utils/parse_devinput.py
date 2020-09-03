@@ -4,11 +4,11 @@ import string
 import struct
 
 from .keycodes import key_codes
-"""
-FORMAT represents the format used by linux kernel input event struct
-See https://github.com/torvalds/linux/blob/v5.5-rc5/include/uapi/linux/input.h#L28
-Stands for: long int, long int, unsigned short, unsigned short, unsigned int
-"""
+
+# FORMAT represents the format used by linux kernel input event struct
+# See https://github.com/torvalds/linux/blob/v5.5-rc5/include/uapi/linux/input.h#L28
+# Stands for: long int, long int, unsigned short, unsigned short, unsigned int
+
 FORMAT = 'llHHI'
 EVENT_SIZE = struct.calcsize(FORMAT)
 
@@ -107,7 +107,10 @@ def parse_devinput(in_file, keyboard_layout=None):
 						mode = 0
 	return "".join(out)
 
-if __name__ == "__main__":
+def main():
 	import sys
 	with open(sys.argv[1], "rb") as f:
 		print(parse_devinput(f), file=open(sys.argv[2], "w") if len(sys.argv) > 2 else sys.stdout)
+
+if __name__ == "__main__":
+	main()
