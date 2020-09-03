@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import subprocess
 import asyncio
 import base64
 import functools
@@ -10,9 +9,11 @@ import math
 import os
 import pickle
 import string
+import subprocess
 import time
-import requests
 from pathlib import Path
+
+import requests
 
 #taken from https://github.com/lukechilds/reverse-shell
 #and http://pentestmonkey.net/cheat-sheet/shells/reverse-shell-cheat-sheet

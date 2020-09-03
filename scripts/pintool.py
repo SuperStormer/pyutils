@@ -5,7 +5,6 @@ import atexit
 import string
 import sys
 from pathlib import Path
-from sys import call_tracing
 from utils.ctftools import pin, INSCOUNT32, INSCOUNT64
 
 def get_args():
@@ -22,7 +21,7 @@ def get_args():
 	parser.add_argument(
 		'-c',
 		"--charset",
-		dest='number',
+		dest='charset_num',
 		default="0",
 		help=(
 		"Charset definition for brute force"
@@ -30,7 +29,11 @@ def get_args():
 		)
 	)
 	parser.add_argument(
-		'-b', "--character", default='', help='Add characters for the charset. For example, -b _-'
+		'-b',
+		"--chars",
+		"--characters",
+		default='',
+		help='Add characters for the charset. For example, -b _-'
 	)
 	parser.add_argument(
 		'-a', "--arch", default='64', help='Program architecture', choices=["32", "64"]
@@ -71,7 +74,7 @@ def get_args():
 	
 	return parser.parse_args()
 
-def get_charset(charset_num, addchar):
+def get_charset(charset_num, additional):
 	charsets = {
 		'0':
 		string.ascii_lowercase + "_{}" + string.digits + string.ascii_uppercase +
@@ -90,7 +93,7 @@ def get_charset(charset_num, addchar):
 		string.printable
 	}
 	
-	return "".join(charsets[n] for n in charset_num.split(",")) + ''.join(addchar)
+	return "".join(charsets[n] for n in charset_num.split(",")) + ''.join(additional)
 
 async def detect_length(filename, inscount_file, max_len, symbol="-", argv=False):
 	initial = None
@@ -106,34 +109,34 @@ async def detect_length(filename, inscount_file, max_len, symbol="-", argv=False
 			(password, i, inscount - initial)
 		)
 
-def add_char(initpass, char, reverse=False):
+def add_char(init_pass, char, reverse=False):
 	
 	if reverse:
-		initpass = char + initpass
+		init_pass = char + init_pass
 	else:
-		initpass += char
+		init_pass += char
 	
-	return initpass
+	return init_pass
 
-def get_password(tempassword, char, i, reverse):
+def get_password(temp_password, char, i, reverse):
 	if reverse:
-		return tempassword[:i - 1] + char + tempassword[i:]
+		return temp_password[:i - 1] + char + temp_password[i:]
 	else:
-		return tempassword[:i] + char + tempassword[i + 1:]
+		return temp_password[:i] + char + temp_password[i + 1:]
 
 async def solve(
 	filename,
 	inscount_file,
-	passlen,
+	pass_len,
 	charset,
 	expression,
-	symbfill="-",
-	initpass="",
+	symbol="-",
+	init_pass="",
 	reverse=False,
 	argv=False
 ):
 	password = None
-	initlen = len(initpass)
+	init_len = len(init_pass)
 	comparison, number = expression.split(" ")
 	number = int(number)
 	try:
@@ -156,32 +159,33 @@ async def solve(
 			print("%s = %d difference %d instructions" % (val, inscount, diff))
 			return cmp_func(diff), char
 	
-	for i in range(initlen, passlen):
+	for i in range(init_len, pass_len):
 		
 		if reverse:
-			tempassword = symbfill * (passlen - i) + initpass
+			temp_password = symbol * (pass_len - i) + init_pass
 		else:
-			tempassword = initpass + symbfill * (passlen - i)
+			temp_password = init_pass + symbol * (pass_len - i)
 		
 		if reverse:
-			i = passlen - i
+			i = pass_len - i
 		#get initial
 		char = charset[0]
 		initial = await pin(
-			filename, inscount_file, get_password(tempassword, char, i, reverse), argv
+			filename, inscount_file, get_password(temp_password, char, i, reverse), argv
 		)
 		
 		coros = [
-			asyncio.create_task(helper(initial, get_password(tempassword, char, i, reverse), char))
-			for char in charset
+			asyncio.create_task(
+			helper(initial, get_password(temp_password, char, i, reverse), char)
+			) for char in charset
 		]
 		for coro in asyncio.as_completed(coros):
 			success, char = await coro
 			if success:
 				for coro in coros:
 					coro.cancel()
-				initpass = add_char(initpass, char, reverse)
-				password = get_password(tempassword, char, i, reverse)
+				init_pass = add_char(init_pass, char, reverse)
+				password = get_password(temp_password, char, i, reverse)
 				print(password)
 				break
 		else:
@@ -201,10 +205,10 @@ if __name__ == '__main__':
 	
 	args = get_args()
 	
-	initpass = args.initpass
-	passlen = args.len
-	symbfill = args.symbol
-	charset = symbfill + get_charset(args.number, args.character)
+	init_pass = args.initpass
+	pass_len = args.len
+	symbol = args.symbol
+	charset = symbol + get_charset(args.charset_num, args.characters)
 	arch = args.arch
 	expression = args.expression.strip()
 	detect = args.detect
@@ -214,15 +218,15 @@ if __name__ == '__main__':
 		print("File does not exist.")
 		sys.exit(1)
 	filename = str(filename)
-	if len(initpass) >= passlen:
+	if len(init_pass) >= pass_len:
 		print("The length of init password must be less than password length.")
 		sys.exit(1)
 	
-	if passlen > 64:
+	if pass_len > 64:
 		print("The password must be less than 64 characters.")
 		sys.exit(1)
 	
-	if len(symbfill) > 1:
+	if len(symbol) > 1:
 		print("Only one symbol is allowed.")
 		sys.exit(1)
 	
@@ -237,11 +241,11 @@ if __name__ == '__main__':
 	atexit.register(cleanup)
 	
 	if detect is True:
-		asyncio.run(detect_length(filename, inscount_file, passlen, symbfill, argv))
+		asyncio.run(detect_length(filename, inscount_file, pass_len, symbol, argv))
 		sys.exit()
 	password = asyncio.run(
 		solve(
-		filename, inscount_file, passlen, charset, expression, symbfill, initpass, args.reverse,
+		filename, inscount_file, pass_len, charset, expression, symbol, init_pass, args.reverse,
 		argv
 		)
 	)
