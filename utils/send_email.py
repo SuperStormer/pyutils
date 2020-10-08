@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import smtplib
 import ssl
-from email.message import EmailMessage
 import sys
-from typing import Union, Tuple, Optional
+from email.message import EmailMessage
+from typing import Tuple, Union
 
 def send_email(
 	sender_email: str,

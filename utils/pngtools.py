@@ -1,6 +1,6 @@
 import struct
 import zlib
-from utils.crypto.misc import long_to_bytes
+from .crypto.misc import long_to_bytes
 
 def fix_png_size(filename):
 	with open(filename, "rb+") as f:
@@ -15,6 +15,9 @@ def fix_png_size(filename):
 					f.write(struct.pack(">II", width, height))
 					return (width, height)
 
-if __name__ == "__main__":
+def main():
 	import sys
 	print(fix_png_size(sys.argv[1]))
+
+if __name__ == "__main__":
+	main()

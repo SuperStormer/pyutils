@@ -1,6 +1,7 @@
 import itertools
 
-def imgs_to_table(imgs, column_num):  #imgs is (caption,image url) list. returns html table in string form
+def imgs_to_table(imgs, column_num):
+	"""imgs is (caption,image url) list. returns html table in string form """
 	result = """<style>
 	table {
 		border-collapse: collapse;

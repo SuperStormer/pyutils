@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-from typing import List
-from dataclasses import dataclass
-import requests
 import sys
+from dataclasses import dataclass
+from typing import List
+
+import requests
+
 URL = "http://www.factordb.com/api"
 
 @dataclass
