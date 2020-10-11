@@ -2,24 +2,23 @@ import os
 import itertools
 import struct
 import base64
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.backends import default_backend
+from Crypto.Cipher import AES
 from .xor import xor, decrypt_repeating_key_xor
 from ..itertools2 import grouper
 from .padding import pad_pkcs7, unpad_pkcs7, round_to_multiple
 
 #actual encryption/decryption funcs
 def aes_ecb(s, key, mode, no_pad=False):
-	cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend())
+	cipher = AES.new(key, AES.MODE_ECB)
 	if mode == "decrypt":
-		func = cipher.decryptor()
+		func = cipher.decrypt
 	elif mode == "encrypt":
 		if not no_pad:
 			s = pad_pkcs7(s, 16)
-		func = cipher.encryptor()
+		func = cipher.encrypt
 	else:
 		raise ValueError(f"Illegal mode {mode} is not 'decrypt' or 'encrypt' ")
-	return func.update(s) + func.finalize()
+	return func(s)
 
 def aes_cbc(s, key, iv, mode):
 	if mode == "encrypt":
