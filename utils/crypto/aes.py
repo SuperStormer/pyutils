@@ -1,5 +1,4 @@
 import os
-import math
 import itertools
 import struct
 import base64
@@ -7,24 +6,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from .xor import xor, decrypt_repeating_key_xor
 from ..itertools2 import grouper
-
-#utils
-def round_to_multiple(x, y):
-	return math.ceil(x / y) * y
-
-def pad_pkcs7(s, block_size=16):
-	length = round_to_multiple(len(s), block_size)
-	pad_len = length - len(s)
-	if pad_len == 0:
-		pad_len = block_size
-	return s + bytes((pad_len, ) * pad_len)
-
-def unpad_pkcs7(s, block_size=16):
-	pad_length = s[-1]
-	if all(c == pad_length for c in s[-pad_length:]):
-		return s[:-pad_length]
-	else:
-		raise ValueError(f"Invalid PKCS#7 padding on {s!r}")
+from .padding import pad_pkcs7, unpad_pkcs7, round_to_multiple
 
 #actual encryption/decryption funcs
 def aes_ecb(s, key, mode, no_pad=False):
@@ -79,6 +61,7 @@ def detect_ecb(oracle):
 	blocks = list(map(bytes, grouper(oracle(plaintext), 16, 0)))
 	return len(blocks) != len(set(blocks))
 
+#attacks
 def decrypt_ecb_suffix(oracle):
 	#see cryptopals #12/#14
 	block_size = detect_blocksize(oracle)

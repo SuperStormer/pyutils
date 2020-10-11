@@ -1,3 +1,5 @@
+import math
+
 def reverse_num(n):
 	m = 0
 	while n != 0:  #iterate through digits right to left
@@ -12,3 +14,6 @@ def digit_sum(n):
 		m += n % 10
 		n //= 10
 	return m
+
+def round_to_multiple(x, y):
+	return math.ceil(x / y) * y
