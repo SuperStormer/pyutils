@@ -1,9 +1,12 @@
 import math
 import random
 
-from .misc import bytes_to_long, long_to_bytes
 from Crypto.Util.number import getPrime
-from ..num.ntheory import modinv, crt, egcd
+from sympy.ntheory import continued_fraction_convergents, continued_fraction_iterator
+from sympy import Rational
+
+from ..num.ntheory import crt, egcd, modinv
+from .misc import bytes_to_long, long_to_bytes
 
 def find_d(e, p, q):
 	return modinv(e, totient(p, q))
@@ -52,8 +55,8 @@ def gen_keypair(key_len, e=3):
 #from https://stackoverflow.com/q/55436001/7941251
 def invpow(x, n):
 	"""Finds the integer component of the n'th root of x,
-    an integer such that y ** n <= x < (y + 1) ** n.
-    """
+	an integer such that y ** n <= x < (y + 1) ** n.
+	"""
 	high = 1
 	while high**n < x:
 		high *= 2
@@ -83,3 +86,23 @@ def common_mod_attack(c1, c2, e1, e2, n):
 	gcd, a, b = egcd(e1, e2)
 	ct = (pow(c1, a, n) * pow(c2, b, n)) % n
 	return invpow(ct, gcd)
+
+def lsb_parity_oracle(c, n, e, oracle):
+	upper = n
+	lower = 0
+	for _ in range(n.bit_length()):
+		c = (c * pow(2, e, n)) % n
+		if oracle(c):  #even
+			upper = (upper + lower) // 2
+		else:
+			lower = (lower + upper) // 2
+	return upper
+
+def wieners_attack(n, e):
+	c = 2
+	convergents = continued_fraction_convergents(continued_fraction_iterator(Rational(e / n)))
+	for convergent in convergents:
+		d = convergent.denominator()
+		p = pow(c, d, n)
+		if pow(p, e, n) == c:
+			return d

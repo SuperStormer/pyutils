@@ -6,6 +6,7 @@ def xor(s, t):
 	return bytes(a ^ b for a, b in zip(s, t))
 
 def one_byte_xor_all(s):
+	"""returns (plaintext,key)"""
 	return ((xor(s, itertools.repeat(c)).decode("utf-8", errors="ignore"), c) for c in range(256))
 
 def decrypt_one_byte_xor(s):
@@ -33,6 +34,7 @@ def repeating_key_xor_all(s, min_len=2, max_len=40, keysizes_to_try=3):
 	return keys
 
 def decrypt_repeating_key_xor(s, min_len=2, max_len=40, keysizes_to_try=3):
+	"""returns (plaintext,key)"""
 	return max(
 		repeating_key_xor_all(s, min_len, max_len, keysizes_to_try),
 		key=lambda x: english_like(x[0].decode("utf-8", errors="ignore"))
