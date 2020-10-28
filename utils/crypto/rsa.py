@@ -2,8 +2,6 @@ import math
 import random
 
 from Crypto.Util.number import getPrime
-from sympy.ntheory import continued_fraction_convergents, continued_fraction_iterator
-from sympy import Rational
 
 from ..num.ntheory import crt, egcd, modinv
 from .misc import bytes_to_long, long_to_bytes
@@ -99,6 +97,9 @@ def lsb_parity_oracle(c, n, e, oracle):
 	return upper
 
 def wieners_attack(n, e):
+	#lazy imports to avoid slowing down initial load
+	from sympy.ntheory import continued_fraction_convergents, continued_fraction_iterator
+	from sympy import Rational
 	c = 2
 	convergents = continued_fraction_convergents(continued_fraction_iterator(Rational(e / n)))
 	for convergent in convergents:
