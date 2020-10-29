@@ -73,7 +73,7 @@ def hastad_broadcast_attack(cts, n_s, e):
 	# see cryptopals 40
 	return invpow(crt(cts, n_s), e)
 
-def decrypt_unpadded_oracle(c, n, e, oracle):
+def decrypt_unpadded_oracle(c, e, n, oracle):
 	# see cryptopals 41
 	s = random.randint(2, n - 1)
 	c_prime = (pow(s, e, n) * c) % n
@@ -85,7 +85,7 @@ def common_mod_attack(c1, c2, e1, e2, n):
 	ct = (pow(c1, a, n) * pow(c2, b, n)) % n
 	return invpow(ct, gcd)
 
-def lsb_parity_oracle(c, n, e, oracle):
+def lsb_parity_oracle(c, e, n, oracle):
 	upper = n
 	lower = 0
 	for _ in range(n.bit_length()):
@@ -96,7 +96,7 @@ def lsb_parity_oracle(c, n, e, oracle):
 			lower = (lower + upper) // 2
 	return upper
 
-def wieners_attack(n, e):
+def wieners_attack(e, n):
 	#lazy imports to avoid slowing down initial load
 	from sympy.ntheory import continued_fraction_convergents, continued_fraction_iterator
 	from sympy import Rational
