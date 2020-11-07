@@ -7,6 +7,7 @@ import sys
 from base64 import *
 from collections import *
 from itertools import *
+from urllib.parse import *
 
 import requests
 

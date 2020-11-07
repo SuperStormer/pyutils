@@ -19,6 +19,6 @@ setuptools.setup(
 	scripts=glob.glob("scripts/*.py"),
 	install_requires=[
 	"pycryptodome>=3.9.8", "requests>=2.24.0", "aiofiles>=0.5.0", "aiohttp>=3.6.2",
-	"z3-solver>=4.8.9.0"
+	"z3-solver>=4.8.9.0", "keystone-engine>=0.9.2"
 	]
 )
