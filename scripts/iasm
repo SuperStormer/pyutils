@@ -54,14 +54,15 @@ class AsmRepl():
 		self.flags, self.flags_addr = create_array(1)
 		
 		#4. save all the regs in the buffer
-		#5. mov the saved rsp and rbp to rsp and rbp
+		#5. save flags to buffer
+		#6. mov the saved rsp and rbp to rsp and rbp
 		self.epilogue = self.ks.asm(
 			"; ".join(
 			f"mov rax, {reg}; mov [{self.reg_save_addr+i*8}], rax"
 			for i, reg in enumerate(self.regs)
-			) + f"; pushfq; pop rax; mov [{self.flags_addr}], rax; " +
-			f"mov rax, [{self.rsp_save_addr}]; mov rsp, rax; " +
-			f"mov rax, [{self.rbp_save_addr}]; mov rbp, rax; ret;",
+			) + f";mov rax, [{self.rsp_save_addr}]; mov rsp, rax; " +
+			f"mov rax, [{self.rbp_save_addr}]; mov rbp, rax; "
+			f"pushfq; pop rax; mov [{self.flags_addr}], rax; ret; ",
 			as_bytes=True
 		)[0]
 	
@@ -72,6 +73,8 @@ class AsmRepl():
 			except KeyboardInterrupt:
 				print()
 				continue
+			except EOFError:
+				break
 			if inp.startswith("!"):
 				self.run_python(inp[1:])
 			elif inp.startswith("set "):
@@ -141,9 +144,11 @@ class AsmRepl():
 	
 	def assemble(self, asm):
 		"""assemble into machine code"""
-		#1. set rsp and rbp to the stack location and save the original rsp and rbp
-		#2. mov all of the saved regs to the right spot
+		#1. clear flags
+		#2. set rsp and rbp to the stack location and save the original rsp and rbp
+		#3. mov all of the saved regs to the right spot
 		code = self.ks.asm(
+			"push 0; popfq;"
 			"mov rbx, rsp; mov rcx, rbp;" +
 			f"mov rbp, {self.stack_addr + len(self.stack) * 8}; mov rsp, rbp;" +
 			f"mov rax, rbx; mov [{self.rsp_save_addr}], rax;" +
@@ -151,12 +156,14 @@ class AsmRepl():
 			"; ".join(f"mov {name}, {val}" for name, val in self.regs.items()),
 			as_bytes=True
 		)[0]
-		#3. run the user input
+		#4. run the user input
+		# this is a separate function call to reset rip to 0
 		user_code = self.ks.asm(asm, as_bytes=True)[0]
 		if user_code is not None:
 			code += user_code
-		#4. save all the regs in the buffer
-		#5. mov the saved rsp and rbp to rsp and rbp
+		#5. save all the regs in the buffer
+		#6. save flags to buffer
+		#7. mov the saved rsp and rbp to rsp and rbp
 		code += self.epilogue
 		return code
 	
