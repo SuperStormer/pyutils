@@ -23,8 +23,8 @@ def nth_fib(n):
 		return 0
 	elif n == 1 or n == 2:
 		return 1
-	x = nth_fib4(n // 2)
-	y = nth_fib4(n // 2 + 1)
+	x = nth_fib(n // 2)
+	y = nth_fib(n // 2 + 1)
 	if n % 2 == 0:
 		return x * (2 * y - x)
 	else:

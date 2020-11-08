@@ -11,8 +11,7 @@ from urllib.parse import *
 
 import requests
 
-import utils.crypto.aes as aes
-import utils.crypto.rsa as rsa
+from utils.crypto import aes, rsa
 from utils.crypto.misc import *
 from utils.crypto.xor import *
 from utils.ctf.blind_sqli import blind_sqli, blind_sqli_async, blind_sqli_payload, blind_sqli_payloads, _chars

@@ -1,6 +1,6 @@
 import itertools
 from .misc import english_like, hamming
-from ..itertools2 import grouper
+from utils.itertools2 import grouper
 
 def xor(s, t):
 	return bytes(a ^ b for a, b in zip(s, t))

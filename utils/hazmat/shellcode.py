@@ -1,6 +1,7 @@
 import ctypes
 libc = ctypes.CDLL("libc.so.6")
 
+#based on https://hacktracking.blogspot.com/2015/05/execute-shellcode-in-python.html
 def shellcode_to_func(shellcode: bytes, func_type=None):
 	if func_type is None:
 		func_type = ctypes.CFUNCTYPE(ctypes.c_int)
