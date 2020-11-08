@@ -139,36 +139,44 @@ class AsmRepl():
 		if "regs" in self.to_print:
 			print(self.regs)
 	
-	def run(self, asm):
-		"""run the assembly code"""
-		try:
-			asm = re.sub(r"<(\w+)>", lambda m: str(self.get_libc_address(m.group(1))), asm)
-		except IndexError as e:
-			print(e)
-			return
+	def assemble(self, asm):
+		"""assemble into machine code"""
 		#1. set rsp and rbp to the stack location and save the original rsp and rbp
 		#2. mov all of the saved regs to the right spot
 		code = self.ks.asm(
-			f"mov rbx, rsp; mov rcx, rbp;" +
+			"mov rbx, rsp; mov rcx, rbp;" +
 			f"mov rbp, {self.stack_addr + len(self.stack) * 8}; mov rsp, rbp;" +
 			f"mov rax, rbx; mov [{self.rsp_save_addr}], rax;" +
 			f"mov rax, rcx; mov [{self.rbp_save_addr}], rax; " +
 			"; ".join(f"mov {name}, {val}" for name, val in self.regs.items()),
 			as_bytes=True
 		)[0]
+		#3. run the user input
+		user_code = self.ks.asm(asm, as_bytes=True)[0]
+		if user_code is not None:
+			code += user_code
+		#4. save all the regs in the buffer
+		#5. mov the saved rsp and rbp to rsp and rbp
+		code += self.epilogue
+		return code
+	
+	def run(self, asm):
+		"""run the assembly code"""
+		#replace <func> with libc address
 		try:
-			#3. run the user input
-			user_code = self.ks.asm(asm, as_bytes=True)[0]
-			if user_code is not None:
-				code += user_code
-			#4. save all the regs in the buffer
-			#5. mov the saved rsp and rbp to rsp and rbp
-			code += self.epilogue
-			if "code" in self.to_print:
-				print(code)
+			asm = re.sub(r"<(\w+)>", lambda m: str(self.get_libc_address(m.group(1))), asm)
+		except IndexError as e:
+			print(e)
+			return
+		
+		try:
+			code = self.assemble(asm)
 		except KsError as e:
 			print(e)
 			return
+		if "code" in self.to_print:
+			print(code)
+		
 		run_shellcode(code)
 		self.regs = {reg: val for reg, val in zip(REG_NAMES, self.reg_save)}
 		self.print_vals()
