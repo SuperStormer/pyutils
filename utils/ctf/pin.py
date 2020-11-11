@@ -3,9 +3,9 @@ import asyncio
 import subprocess
 """used for certain rev challs """
 
-PIN = Path("~/pin/pin").expanduser()
-INSCOUNT32 = Path("~/pin/source/tools/ManualExamples/obj-ia32/inscount0.so").expanduser()
-INSCOUNT64 = Path("~/pin/source/tools/ManualExamples/obj-intel64/inscount0.so").expanduser()
+PIN = Path("~/programs/pin/pin").expanduser()
+INSCOUNT32 = Path("~/programs/pin/source/tools/ManualExamples/obj-ia32/inscount0.so").expanduser()
+INSCOUNT64 = Path("~/programs/pin/source/tools/ManualExamples/obj-intel64/inscount0.so").expanduser()
 
 def pin_sync(filename, inscount, passwd, argv=False, out_file="inscount.out"):
 	if argv:
