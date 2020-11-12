@@ -108,9 +108,19 @@ def parse_devinput(in_file, keyboard_layout=None):
 	return "".join(out)
 
 def main():
-	import sys
-	with open(sys.argv[1], "rb") as f:
-		print(parse_devinput(f), file=open(sys.argv[2], "w") if len(sys.argv) > 2 else sys.stdout)
+	import argparse
+	parser = argparse.ArgumentParser()
+	parser.add_argument("file", type=argparse.FileType("rb"))
+	parser.add_argument("output", type=argparse.FileType("w"), nargs="?", default="-")
+	parser.add_argument("--layout", "-l", choices=["azerty", "qwerty"], default="qwerty")
+	args = parser.parse_args()
+	if args.layout == "qwerty":
+		layout = keyboard_layout_qwerty
+	elif args.layout == "azerty":
+		layout = keyboard_layout_azerty
+	else:
+		raise ValueError("Invalid layout - this should be impossible")
+	print(parse_devinput(args.file, layout), file=args.output)
 
 if __name__ == "__main__":
 	main()

@@ -2,7 +2,6 @@
 from abc import ABC, abstractmethod
 import subprocess
 import socket
-import pty
 import time
 import os
 import select

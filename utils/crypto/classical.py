@@ -1,7 +1,6 @@
 import string
 import itertools
-from .misc import english_like, hamming
-from ..itertools2 import grouper
+from .misc import english_like
 
 def caesar_all(s, alphabet_only=True):
 	if alphabet_only:

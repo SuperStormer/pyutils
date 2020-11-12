@@ -162,7 +162,8 @@ class AsmRepl():
 		
 		Other Commands:
 		!<code> : evals python code with all registers, stack and flags as globals
-		set [ stack | regs | flags_short | flags | all ] : set display of provided arg. Default is only regs. all sets stack, regs and flags.
+		set [ stack | regs | flags_short | flags | all ] : set display of provided arg. 
+		    Default is only regs. all sets stack, regs and flags.
 		clear/reset [ stack | regs | all ] : clears value of provided arg
 		help/? : prints this help page
 		exit/quit/Ctrl-D : quits REPL"""

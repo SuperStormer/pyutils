@@ -1,11 +1,14 @@
-import os
-import itertools
-import struct
 import base64
+import itertools
+import os
+import struct
+
 from Crypto.Cipher import AES
-from .xor import xor, decrypt_repeating_key_xor
-from ..itertools2 import grouper
-from .padding import pad_pkcs7, unpad_pkcs7, round_to_multiple
+from utils.itertools2 import grouper
+
+from .padding import pad_pkcs7, round_to_multiple, unpad_pkcs7
+from .xor import decrypt_repeating_key_xor, xor
+
 
 #actual encryption/decryption funcs
 def aes_ecb(s, key, mode, no_pad=False):
