@@ -1,14 +1,12 @@
-#from ctypes import POINTER, c_char_p
 import itertools
 import ctypes
-from enum import Enum, IntEnum
-from typing import ValuesView
+from enum import Enum
 
 class Struct(ctypes.Structure):
 	def __repr__(self):
 		cls = type(self)
-		delimiter = ",\n"
-		return f"{cls.__name__}(\n{delimiter.join(f'{field[0]}={getattr(self,field[0])}' for field in cls._fields_ )})"
+		fields = ",\n".join(f'{field[0]}={getattr(self, field[0])}' for field in cls._fields_)
+		return f"{cls.__name__}(\n{fields})"
 	
 	def get_vla(self, field, typ, size):
 		return (typ * size).from_address(ctypes.addressof(self) + getattr(type(self), field).offset)
@@ -16,8 +14,8 @@ class Struct(ctypes.Structure):
 class Union(ctypes.Union):
 	def __repr__(self):
 		cls = type(self)
-		delimiter = ",\n"
-		return f"{cls.__name__}(\n{delimiter.join(f'{field[0]}={getattr(self,field[0])}' for field in cls._fields_ )})"
+		fields = ",\n".join(f'{field[0]}={getattr(self, field[0])}' for field in cls._fields_)
+		return f"{cls.__name__}(\n{fields})"
 
 # https://github.com/python/cpython/blob/master/Include/object.h
 #define PyObject_HEAD          PyObject ob_base;
@@ -38,6 +36,8 @@ class PyObject(Struct):
 		return type_dict[self.ob_type]
 
 PyObject_p = ctypes.POINTER(PyObject)
+Py_None = PyObject.from_address(id(None))
+Py_Ellipsis = PyObject.from_address(id(Ellipsis))
 
 class PyVarObject(Struct):
 	_fields_ = [("ob_base", PyObject), ("ob_size", ctypes.c_ssize_t)]
@@ -51,17 +51,19 @@ class PyLongObject(Struct):
 	
 	@property
 	def ob_digit(self):
+		return self.get_vla("_ob_digit", ctypes.c_uint32, abs(self.ob_base.ob_size))
+	
+	@property
+	def value(self):
 		ob_size = self.ob_base.ob_size
 		if ob_size == 0:
 			return 0
-		value = sum(
-			val * 2**(PyLongObject.SHIFT * i)
-			for i, val in enumerate(self.get_vla("_ob_digit", ctypes.c_uint32, abs(ob_size)))
-		)
+		value = sum(val * 2**(PyLongObject.SHIFT * i) for i, val in enumerate(self.ob_digit()))
 		sign = 1 if ob_size > 0 else -1
 		return sign * value
-	
-	value = ob_digit
+
+Py_True = PyLongObject.from_address(id(True))
+Py_False = PyLongObject.from_address(id(False))
 
 # https://github.com/python/cpython/blob/master/Include/floatobject.h
 class PyFloatObject(Struct):
@@ -70,6 +72,25 @@ class PyFloatObject(Struct):
 	@property
 	def value(self):
 		return self.ob_fval
+
+# https://github.com/python/cpython/blob/master/Include/complexobject.h
+class Py_complex(Struct):
+	_fields_ = [("real", ctypes.c_double), ("imag", ctypes.c_double)]
+
+class PyComplexObject(Struct):
+	_fields_ = [("ob_base", PyObject), ("cval", Py_complex)]
+	
+	@property
+	def real(self):
+		return self.cval.real
+	
+	@property
+	def imag(self):
+		return self.cval.imag
+	
+	@property
+	def value(self):
+		return complex(self.real, self.imag)
 
 # https://github.com/python/cpython/blob/master/Include/cpython/tupleobject.h
 class PyTupleObject(Struct):
@@ -116,7 +137,17 @@ class CharType(Enum):
 		self.kind = kind
 		return self
 
-class PyAsciiObject(Struct):
+class PyStrMixin():
+	def to_ascii(self):
+		return PyAsciiObject.from_address(ctypes.addressof(self))
+	
+	def to_compact_unicode(self):
+		return PyCompactUnicodeObject.from_address(ctypes.addressof(self))
+	
+	def to_unicode(self):
+		return PyUnicodeObject.from_address(ctypes.addressof(self))
+
+class PyAsciiObject(Struct, PyStrMixin):
 	class InternState(Enum):
 		SSTATE_NOT_INTERNED = 0
 		SSTATE_INTERNED_MORTAL = 1
@@ -148,12 +179,6 @@ class PyAsciiObject(Struct):
 	def char_type(self):
 		return CharType(self.state.kind)  #type:ignore #pylint: disable=no-value-for-parameter
 	
-	def to_compact_unicode(self):
-		return PyCompactUnicodeObject.from_address(ctypes.addressof(self))
-	
-	def to_unicode(self):
-		return PyUnicodeObject.from_address(ctypes.addressof(self))
-	
 	def get_real(self):
 		"""get the real str class """
 		if self.state.compact:
@@ -164,7 +189,7 @@ class PyAsciiObject(Struct):
 		else:
 			return self.to_unicode()
 
-class PyCompactUnicodeObject(Struct):
+class PyCompactUnicodeObject(Struct, PyStrMixin):
 	_fields_ = [
 		("_base", PyAsciiObject), ("utf8_length", ctypes.c_ssize_t), ("utf8", ctypes.c_char_p),
 		("wstr_length", ctypes.c_ssize_t)
@@ -173,31 +198,32 @@ class PyCompactUnicodeObject(Struct):
 	@property
 	def value(self):
 		""" gets str value (data is stored after the struct for some reason)"""
-		char_type = self._base.char_type().type
+		char_type = self._base.char_type.type
 		return (char_type * self._base.length
 				).from_address(ctypes.addressof(self) + ctypes.sizeof(PyCompactUnicodeObject))
-	
-	def to_unicode(self):
-		return PyUnicodeObject(ctypes.addressof(self))
 
-class PyUnicodeObject(Struct):
+class PyUnicodeObject(Struct, PyStrMixin):
 	class Data(Union):
 		#pylint: disable=no-member
 		_fields_ = [
-			("any", ctypes.c_void_p), ("latin1", ctypes.POINTER(CharType.Py_UCS1.type)), #type:ignore 
-			("ucs2", ctypes.POINTER(CharType.Py_UCS2.type)), #type:ignore 
-			("ucs4", ctypes.POINTER(CharType.Py_UCS4.type)) #type:ignore 
+			("any", ctypes.c_void_p),
+			("latin1", ctypes.POINTER(CharType.Py_UCS1.type)),  #type:ignore 
+			("ucs2", ctypes.POINTER(CharType.Py_UCS2.type)),  #type:ignore 
+			("ucs4", ctypes.POINTER(CharType.Py_UCS4.type))  #type:ignore 
 		]
+	
+	_fields_ = [("_base", PyCompactUnicodeObject), ("data", Data)]
 	
 	@property
 	def value(self):
 		ascii_obj = self._base._base  #pylint: disable=protected-access
-		char_type = ascii_obj.char_type().type
-		arr_type = char_type * ascii_obj.length
-		field_addr = self.data.any.value
-		return arr_type.from_address(field_addr)
-
-PyUnicodeObject._fields_ = [("_base", PyCompactUnicodeObject), ("data", PyUnicodeObject.Data)]
+		char_type = ascii_obj.char_type
+		if char_type == CharType.wchar_t:
+			return ascii_obj.wstr
+		else:
+			arr_type = char_type.type * ascii_obj.length
+			field_addr = self.data.any
+			return arr_type.from_address(field_addr)
 
 # https://github.com/python/cpython/blob/master/Include/cpython/listobject.h
 class PyListObject(Struct):
@@ -231,3 +257,67 @@ class PySetObject(Struct):
 		return itertools.islice(self._table, self.mask + 1)
 	
 	value = table
+
+# https://github.com/python/cpython/blob/master/Include/cpython/dictobject.h
+# and https://github.com/python/cpython/blob/master/Objects/dict-common.h
+class PyDictObject(Struct):
+	@property
+	def indices(self):
+		return self.ma_keys[0].dk_indices
+	
+	@property
+	def items(self):
+		if ctypes.cast(self.ma_values, ctypes.c_void_p).value is None:
+			return self.ma_keys[0].dk_entries
+		else:  #TODO
+			raise NotImplementedError(
+				"split table not implemented, see https://github.com/python/cpython/blob/master/Include/cpython/dictobject.h"
+			)
+	
+	value = items
+
+class PyDictKeyEntry(Struct):
+	_fields_ = [("me_hash", Py_hash_t), ("me_key", PyObject_p), ("me_value", PyObject_p)]
+
+dict_lookup_func = ctypes.CFUNCTYPE(
+	ctypes.c_ssize_t, ctypes.POINTER(PyDictObject), PyObject_p, Py_hash_t,
+	ctypes.POINTER(PyObject_p)
+)
+
+class PyDictKeysObject(Struct):
+	DKIX_EMPTY = -1
+	DKIX_DUMMY = -2
+	DKIX_ERROR = -3
+	_fields_ = [
+		("dk_refcnt", ctypes.c_ssize_t), ("dk_size", ctypes.c_ssize_t),
+		("dk_lookup", dict_lookup_func), ("dk_usable", ctypes.c_ssize_t),
+		("dk_nentries", ctypes.c_ssize_t), ("_dk_indices", ctypes.c_byte)
+	]
+	
+	@property
+	def indices_type(self):
+		if self.dk_size <= (1 << 8):
+			return ctypes.c_byte
+		elif self.dk_size <= (1 << 16):
+			return ctypes.c_int16
+		elif self.dk_size <= (1 << 32):
+			return ctypes.c_int32
+		else:
+			return ctypes.c_int64
+	
+	@property
+	def dk_indices(self):
+		typ = self.indices_type
+		return self.get_vla("_dk_indices", typ, self.dk_size * ctypes.sizeof(typ))
+	
+	@property
+	def dk_entries(self):
+		return (PyDictKeyEntry * self.dk_nentries).from_address(
+			ctypes.addressof(self) + type(self)._dk_indices.offset +
+			self.dk_size * ctypes.sizeof(self.indices_type)
+		)
+
+PyDictObject._fields_ = [
+	("ob_base", PyObject), ("ma_used", ctypes.c_ssize_t), ("ma_version_tag", ctypes.c_uint64),
+	("ma_keys", ctypes.POINTER(PyDictKeysObject)), ("ma_values", ctypes.POINTER(PyObject_p))
+]
