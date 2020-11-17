@@ -9,7 +9,6 @@ from utils.itertools2 import grouper
 from .padding import pad_pkcs7, round_to_multiple, unpad_pkcs7
 from .xor import decrypt_repeating_key_xor, xor
 
-
 #actual encryption/decryption funcs
 def aes_ecb(s, key, mode, no_pad=False):
 	cipher = AES.new(key, AES.MODE_ECB)
@@ -66,21 +65,25 @@ def detect_ecb(oracle):
 #attacks
 def decrypt_ecb_suffix(oracle):
 	#see cryptopals #12/#14
-	block_size = detect_blocksize(oracle)
+	block_size: int = detect_blocksize(oracle)
 	if not detect_ecb(oracle):
 		raise ValueError("oracle not using ecb")
 	# get prefix length
+	common_prefix = None
+	prefix_len = None
 	for i in range(block_size):
 		padding = b"A" * (i + 2 * block_size)
 		blocks = list(grouper(oracle(padding), block_size))
-		for i, b1, b2 in zip(itertools.count(), blocks, blocks[1:]):
+		for j, b1, b2 in zip(itertools.count(), blocks, blocks[1:]):
 			if b1 == b2:
 				common_prefix = padding
-				prefix_len = (i + 2) * block_size
+				prefix_len = (j + 2) * block_size
 				break
 		else:
 			continue
 		break
+	if common_prefix is None:
+		raise ValueError("Couldn't find prefix length")
 	length = round_to_multiple(len(oracle(common_prefix)) - prefix_len, block_size)
 	known = bytearray()
 	for j in range(length):

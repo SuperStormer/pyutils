@@ -119,8 +119,8 @@ class AsmRepl():
 				**self.regs
 				}, {}
 				)
-			)
-		except Exception:
+			)  #pylint: disable=eval-used
+		except Exception:  #pylint: disable=broad-except
 			traceback.print_exc()
 	
 	def set_display(self, values):
@@ -181,7 +181,7 @@ class AsmRepl():
 		if "regs" in self.to_print:
 			print(self.regs)
 	
-	def assemble(self, asm):
+	def assemble(self, asm: str) -> bytes:
 		"""assemble into machine code"""
 		#1. clear flags
 		#2. set rsp and rbp to the stack location and save the original rsp and rbp
