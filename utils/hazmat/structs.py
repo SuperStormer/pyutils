@@ -1,3 +1,4 @@
+from ctypes import c_ssize_t, py_object
 import itertools
 import ctypes
 from enum import Enum
@@ -10,6 +11,9 @@ class Struct(ctypes.Structure):
 	
 	def get_vla(self, field, typ, size):
 		return (typ * size).from_address(ctypes.addressof(self) + getattr(type(self), field).offset)
+	
+	def to_py_object(self):
+		return ctypes.cast(ctypes.byref(self), py_object).value
 
 class Union(ctypes.Union):
 	def __repr__(self):
@@ -47,7 +51,7 @@ Py_hash_t = ctypes.c_ssize_t
 # https://github.com/python/cpython/blob/master/Include/longintrepr.h
 class PyLongObject(Struct):
 	SHIFT = 30
-	_fields_ = [("ob_base", PyVarObject), ("_ob_digit", ctypes.c_uint32)]
+	_fields_ = [("ob_base", PyVarObject), ("_ob_digit", ctypes.c_uint32 * 1)]
 	
 	@property
 	def ob_digit(self):
@@ -94,7 +98,7 @@ class PyComplexObject(Struct):
 
 # https://github.com/python/cpython/blob/master/Include/cpython/tupleobject.h
 class PyTupleObject(Struct):
-	_fields_ = [("ob_base", PyVarObject), ("_ob_item", PyObject_p)]
+	_fields_ = [("ob_base", PyVarObject), ("_ob_item", PyObject_p * 1)]
 	
 	@property
 	def ob_item(self):
@@ -104,7 +108,7 @@ class PyTupleObject(Struct):
 
 # https://github.com/python/cpython/blob/master/Include/cpython/bytesobject.h
 class PyBytesObject(Struct):
-	_fields_ = [("ob_base", PyVarObject), ("ob_shash", Py_hash_t), ("_ob_sval", ctypes.c_char)]
+	_fields_ = [("ob_base", PyVarObject), ("ob_shash", Py_hash_t), ("_ob_sval", ctypes.c_char * 1)]
 	
 	@property
 	def ob_sval(self):
@@ -122,6 +126,47 @@ class PyByteArrayObject(Struct):
 	@property
 	def value(self):
 		return self.ob_start
+
+# https://github.com/python/cpython/blob/master/Include/memoryobject.h
+# and https://github.com/python/cpython/blob/master/Include/cpython/object.h
+class Py_buffer(Struct):
+	_fields_ = [
+		("buf", ctypes.c_void_p), ("obj", PyObject_p), ("len", ctypes.c_ssize_t),
+		("itemsize", ctypes.c_ssize_t), ("readonly", ctypes.c_int), ("ndim", ctypes.c_int),
+		("format", ctypes.c_char_p), ("shape", ctypes.POINTER(ctypes.c_ssize_t)),
+		("strides", ctypes.POINTER(ctypes.c_ssize_t)),
+		("suboffsets", ctypes.POINTER(ctypes.c_ssize_t)), ("internal", ctypes.c_void_p)
+	]
+
+class PyManagedBufferObject(Struct):
+	class Flags(Enum):
+		RELEASED = 1
+		FREE_FORMAT = 2
+	
+	_fields_ = [
+		("ob_base", PyObject), ("flags", ctypes.c_int), ("exports", ctypes.c_ssize_t),
+		("master", Py_buffer)
+	]
+
+class PyMemoryViewObject(Struct):
+	class Flags(Enum):
+		RELEASE = 1
+		C = 2
+		FORTRAN = 4
+		SCALAR = 8
+		PIL = 16
+	
+	_fields_ = [
+		("ob_base", PyVarObject), ("mbuf", ctypes.POINTER(PyManagedBufferObject)),
+		("hash", ctypes.c_ssize_t), ("flags", ctypes.c_int), ("exports", ctypes.c_ssize_t),
+		("view", Py_buffer), ("weakreflist", PyObject_p), ("ob_array", (ctypes.c_ssize_t * 1))
+	]
+	
+	@property
+	def buf(self, item_type=ctypes.c_char):
+		return (item_type * (self.view.len // ctypes.sizeof(item_type))).from_address(self.view.buf)
+	
+	value = buf
 
 # https://github.com/python/cpython/blob/master/Include/cpython/unicodeobject.h
 class CharType(Enum):
@@ -242,9 +287,8 @@ class PyListObject(Struct):
 class setentry(Struct):
 	_fields_ = [("key", PyObject_p), ("hash", Py_hash_t)]
 
-PySet_MINSIZE = 8
-
 class PySetObject(Struct):
+	PySet_MINSIZE = 8
 	_fields_ = [
 		("ob_base", PyObject), ("fill", ctypes.c_ssize_t), ("used", ctypes.c_ssize_t),
 		("mask", ctypes.c_ssize_t), ("_table", ctypes.POINTER(setentry)), ("hash", Py_hash_t),
@@ -291,7 +335,7 @@ class PyDictKeysObject(Struct):
 	_fields_ = [
 		("dk_refcnt", ctypes.c_ssize_t), ("dk_size", ctypes.c_ssize_t),
 		("dk_lookup", dict_lookup_func), ("dk_usable", ctypes.c_ssize_t),
-		("dk_nentries", ctypes.c_ssize_t), ("_dk_indices", ctypes.c_byte)
+		("dk_nentries", ctypes.c_ssize_t), ("_dk_indices", ctypes.c_byte * 1)
 	]
 	
 	@property
@@ -321,3 +365,84 @@ PyDictObject._fields_ = [
 	("ob_base", PyObject), ("ma_used", ctypes.c_ssize_t), ("ma_version_tag", ctypes.c_uint64),
 	("ma_keys", ctypes.POINTER(PyDictKeysObject)), ("ma_values", ctypes.POINTER(PyObject_p))
 ]
+
+# https://github.com/python/cpython/blob/master/Objects/iterobject.c
+class seqiterobject(Struct):
+	"""
+	The first, a sequence iterator, works with an arbitrary sequence
+	 supporting the __getitem__() method. 
+	(from https://docs.python.org/3/c-api/iterator.html)
+	"""
+	_fields_ = [("ob_base", PyObject), ("it_index", ctypes.c_ssize_t), ("it_seq", PyObject_p)]
+	
+	@property
+	def value(self):
+		return self.it_seq[0]
+	
+	@classmethod
+	def from_seq(cls, seq):
+		return PySeqIter_New(seq)[0]
+
+PySeqIter_New = ctypes.pythonapi.PySeqIter_New
+PySeqIter_New.argtypes = [ctypes.py_object]
+PySeqIter_New.restype = ctypes.POINTER(seqiterobject)
+
+class calliterobject(Struct):
+	"""
+	The second works with a callable object and a sentinel value, 
+	calling the callable for each item in the sequence,
+	and ending the iteration when the sentinel value is returned.
+	(from https://docs.python.org/3/c-api/iterator.html)
+	"""
+	_fields_ = [("ob_base", PyObject), ("it_callable", PyObject_p), ("it_sentinel", PyObject_p)]
+	
+	@property
+	def callable(self):
+		return ctypes.cast(self.it_callable, ctypes.py_object).value
+	
+	value = callable
+
+# https://github.com/python/cpython/blob/main/Objects/listobject.c
+class listiterobject(Struct):
+	_fields_ = [
+		("ob_base", PyObject), ("it_index", ctypes.c_ssize_t),
+		("it_seq", ctypes.POINTER(PyListObject))
+	]
+	
+	@property
+	def value(self):
+		return self.it_seq[0]
+
+# https://github.com/python/cpython/blob/main/Objects/tupleobject.c
+class tupleiterobject(Struct):
+	_fields_ = [
+		("ob_base", PyObject), ("it_index", ctypes.c_ssize_t),
+		("it_seq", ctypes.POINTER(PyTupleObject))
+	]
+	
+	@property
+	def value(self):
+		return self.it_seq[0]
+
+# https://github.com/python/cpython/blob/master/Objects/setobject.c
+class setiterobject(Struct):
+	_fields_ = [
+		("ob_base", PyObject), ("si_set", ctypes.POINTER(PySetObject)),
+		("si_used", ctypes.c_ssize_t), ("si_pos", ctypes.c_ssize_t), ("len", ctypes.c_ssize_t)
+	]
+	
+	@property
+	def value(self):
+		return self.si_set[0]
+
+# https://github.com/python/cpython/blob/master/Objects/dictobject.c
+class dictiterobject(Struct):
+	_fields_ = [
+		("ob_base", PyObject), ("di_dict", ctypes.POINTER(PyDictObject)),
+		("di_used", ctypes.c_ssize_t), ("di_pos", ctypes.c_ssize_t), ("di_result", PyObject_p),
+		("len", ctypes.c_ssize_t)
+	]
+	
+	@property
+	def value(self):
+		return self.di_dict[0]
