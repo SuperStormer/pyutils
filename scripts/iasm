@@ -9,6 +9,7 @@ from pathlib import Path
 
 from keystone import KS_ARCH_X86, KS_MODE_64, Ks, KsError
 from utils.hazmat.shellcode import run_shellcode
+from utils.hazmat.misc import get_addr
 
 #ignore rbp and rsp
 REG_NAMES = [
@@ -32,10 +33,6 @@ FLAG_NAMES = {
 	20: ("VIP", "virtual_interrupt_pending"),
 	21: ("ID", "cpuid")
 }
-
-def get_addr(ptr):
-	"""returns address of a pointer"""
-	return ctypes.cast(ptr, ctypes.c_void_p).value
 
 def create_array(length):
 	array = (ctypes.c_uint64 * length)()
