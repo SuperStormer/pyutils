@@ -1,0 +1,352 @@
+import ctypes
+from enum import Flag
+
+from utils.hazmat.misc import get_addr
+
+from .base import Struct
+
+Py_hash_t = ctypes.c_ssize_t  #pylint: disable=invalid-name
+Py_ssize_t = ctypes.c_ssize_t  #pylint: disable=invalid-name
+
+# https://github.com/python/cpython/blob/master/Include/object.h
+#define PyObject_HEAD          PyObject ob_base;
+#define PyObject_VAR_HEAD      PyVarObject ob_base;
+
+class PyObject(Struct):
+	def get_type(self):
+		return type_dict[get_addr(self.ob_type)][0]
+	
+	def get_struct_type(self):
+		return type_dict[get_addr(self.ob_type)][1]
+
+# https://github.com/python/cpython/blob/master/Include/cpython/object.h
+# and https://github.com/python/cpython/blob/master/Include/object.h
+# also based on https://github.com/clarete/forbiddenfruit/blob/master/forbiddenfruit/__init__.py
+# PyTypeObject can't be moved to a separate module because that causes errors due to codependency
+class PyTypeObject(Struct):
+	class Flags(Flag):
+		# Set if the type object is dynamically allocated
+		HEAPTYPE = 1 << 9
+		# Set if the type allows subclassing
+		BASETYPE = 1 << 10
+		# Set if the type implements the vectorcall protocol (PEP 590)
+		HAVE_VECTORCALL = 1 << 11
+		# Set if the type is 'ready' -- fully initialized
+		READY = 1 << 12
+		# Set while the type is being 'readied', to prevent recursive ready calls
+		READYING = 1 << 13
+		# Objects support garbage collection (see objimpl.h)
+		HAVE_GC = 1 << 14
+		# Objects behave like an unbound method
+		METHOD_DESCRIPTOR = 1 << 17
+		# Objects support type attribute cache
+		HAVE_VERSION_TAG = 1 << 18
+		VALID_VERSION_TAG = 1 << 19
+		# Type is abstract and cannot be instantiated
+		IS_ABSTRACT = 1 << 20
+		# Type has am_send entry in tp_as_async slot
+		HAVE_AM_SEND = 1 << 21
+		# These flags are used to determine if a type is a subclass.
+		LONG_SUBCLASS = 1 << 24
+		LIST_SUBCLASS = 1 << 25
+		TUPLE_SUBCLASS = 1 << 26
+		BYTES_SUBCLASS = 1 << 27
+		UNICODE_SUBCLASS = 1 << 28
+		DICT_SUBCLASS = 1 << 29
+		BASE_EXC_SUBCLASS = 1 << 30
+		TYPE_SUBCLASS = 1 << 31
+		
+		DEFAULT = HAVE_VERSION_TAG
+	
+	@property
+	def tp_flags(self):
+		return PyTypeObject.Flags(self._tp_flags)
+	
+	def get_type(self):
+		return type_dict[ctypes.addressof(self)][0]
+	
+	def get_struct_type(self):
+		return type_dict[ctypes.addressof(self)][1]
+
+PyTypeObject_p = ctypes.POINTER(PyTypeObject)  #pylint: disable=invalid-name
+PyObject._fields_ = [("ob_refcnt", ctypes.c_ssize_t), ("ob_type", PyTypeObject_p)]  #pylint: disable=protected-access
+PyObject_p = ctypes.POINTER(PyObject)
+
+class PyVarObject(Struct):
+	_fields_ = [("ob_base", PyObject), ("ob_size", ctypes.c_ssize_t)]
+
+#This is here due to codependencies and I don't want to trigger some weird error
+class Py_buffer(Struct):  #pylint: disable=invalid-name
+	_fields_ = [
+		("buf", ctypes.c_void_p),
+		("obj", PyObject_p),  #owned ref
+		("len", ctypes.c_ssize_t),
+		("itemsize", ctypes.c_ssize_t),
+		("readonly", ctypes.c_int),
+		("ndim", ctypes.c_int),
+		("format", ctypes.c_char_p),
+		("shape", ctypes.POINTER(ctypes.c_ssize_t)),
+		("strides", ctypes.POINTER(ctypes.c_ssize_t)),
+		("suboffsets", ctypes.POINTER(ctypes.c_ssize_t)),
+		("internal", ctypes.c_void_p)
+	]
+
+# bunch of funcs that the following classes use
+unaryfunc = ctypes.CFUNCTYPE(ctypes.py_object, ctypes.py_object)
+binaryfunc = ctypes.CFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.py_object)
+ternaryfunc = ctypes.CFUNCTYPE(
+	ctypes.py_object, ctypes.py_object, ctypes.py_object, ctypes.py_object
+)
+inquiry = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.py_object)
+lenfunc = ctypes.CFUNCTYPE(ctypes.c_ssize_t, ctypes.py_object)
+
+ssizeargfunc = ctypes.CFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.c_ssize_t)
+ssizeobjargproc = ctypes.CFUNCTYPE(
+	ctypes.c_int, ctypes.py_object, ctypes.c_ssize_t, ctypes.py_object
+)
+objobjargproc = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.py_object, ctypes.py_object)
+
+objobjproc = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.py_object)
+visitproc = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.c_void_p)
+traverseproc = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.py_object, visitproc, ctypes.c_void_p)
+
+freefunc = ctypes.CFUNCTYPE(None, ctypes.c_void_p)
+destructor = ctypes.CFUNCTYPE(None, ctypes.py_object)
+
+getattrfunc = ctypes.CFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.c_char_p)
+getattrofunc = ctypes.CFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.py_object)
+setattrfunc = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.c_char_p, ctypes.py_object)
+setattrofunc = ctypes.CFUNCTYPE(
+	ctypes.py_object, ctypes.py_object, ctypes.c_char_p, ctypes.py_object
+)
+
+reprfunc = ctypes.CFUNCTYPE(ctypes.py_object, ctypes.py_object)
+hashfunc = ctypes.CFUNCTYPE(Py_hash_t, ctypes.py_object)
+richcmpfunc = ctypes.CFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.py_object, ctypes.c_int)
+
+getiterfunc = ctypes.CFUNCTYPE(ctypes.py_object, ctypes.py_object)
+iternextfunc = ctypes.CFUNCTYPE(ctypes.py_object, ctypes.py_object)
+
+descrgetfunc = ctypes.CFUNCTYPE(
+	ctypes.py_object, ctypes.py_object, ctypes.py_object, ctypes.py_object
+)
+descrsetfunc = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.py_object, ctypes.py_object)
+
+initproc = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.py_object, ctypes.py_object)
+newfunc = ctypes.CFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.py_object, ctypes.py_object)
+allocfunc = ctypes.CFUNCTYPE(ctypes.py_object, PyTypeObject_p, ctypes.c_ssize_t)
+
+PySendResult = ctypes.c_uint  # actually an enum
+sendfunc = ctypes.CFUNCTYPE(
+	PySendResult, ctypes.py_object, ctypes.py_object, ctypes.POINTER(ctypes.py_object)
+)
+vectorcallfunc = ctypes.CFUNCTYPE(
+	ctypes.py_object, ctypes.py_object, ctypes.POINTER(ctypes.py_object), ctypes.c_size_t,
+	ctypes.py_object
+)
+getbufferproc = ctypes.CFUNCTYPE(
+	ctypes.c_int, ctypes.py_object, ctypes.POINTER(Py_buffer), ctypes.c_int
+)
+releasebufferproc = ctypes.CFUNCTYPE(None, ctypes.py_object, ctypes.POINTER(Py_buffer))
+
+class PyNumberMethods(Struct):
+	_fields_ = [
+		# normal ops
+		('nb_add', binaryfunc),
+		('nb_subtract', binaryfunc),
+		('nb_multiply', binaryfunc),
+		('nb_remainder', binaryfunc),
+		('nb_divmod', binaryfunc),
+		('nb_power', binaryfunc),
+		('nb_negative', unaryfunc),
+		('nb_positive', unaryfunc),
+		('nb_absolute', unaryfunc),
+		('nb_bool', inquiry),
+		('nb_invert', unaryfunc),
+		('nb_lshift', binaryfunc),
+		('nb_rshift', binaryfunc),
+		('nb_and', binaryfunc),
+		('nb_xor', binaryfunc),
+		('nb_or', binaryfunc),
+		('nb_int', unaryfunc),
+		('nb_reserved', ctypes.c_void_p),  # used to be nb_long 
+		('nb_float', unaryfunc),
+		# inplace ops
+		('nb_inplace_add', binaryfunc),
+		('nb_inplace_subtract', binaryfunc),
+		('nb_inplace_multiply', binaryfunc),
+		('nb_inplace_remainder', binaryfunc),
+		('nb_inplace_power', ternaryfunc),
+		('nb_inplace_lshift', binaryfunc),
+		('nb_inplace_rshift', binaryfunc),
+		('nb_inplace_and', binaryfunc),
+		('nb_inplace_xor', binaryfunc),
+		('nb_inplace_or', binaryfunc),
+		# division
+		('nb_floor_divide', binaryfunc),
+		('nb_true_divide', binaryfunc),
+		('nb_inplace_floor_divide', binaryfunc),
+		('nb_inplace_true_divide', binaryfunc),
+		# __index__()
+		('nb_index', unaryfunc),
+		# matmul
+		('nb_matrix_multiply', binaryfunc),
+		('nb_inplace_matrix_multiply', binaryfunc),
+	]
+
+class PySequenceMethods(Struct):
+	_fields_ = [
+		('sq_length', lenfunc),
+		('sq_concat', binaryfunc),
+		('sq_repeat', ssizeargfunc),
+		('sq_item', ssizeargfunc),
+		('was_sq_slice', ctypes.c_void_p),
+		('sq_ass_item', ssizeobjargproc),
+		('was_sq_ass_slice', ctypes.c_void_p),
+		('sq_contains', objobjproc),
+		('sq_inplace_concat', binaryfunc),
+		('sq_inplace_repeat', ssizeargfunc),
+	]
+
+class PyMappingMethods(Struct):
+	_fields_ = [
+		("mp_length", lenfunc), ("mp_subscript", binaryfunc), ("mp_ass_subscript", objobjproc)
+	]
+
+class PyAsyncMethods(Struct):
+	_fields_ = [
+		("am_await", unaryfunc), ("am_aiter", unaryfunc), ("am_anext", unaryfunc),
+		("am_send", sendfunc)
+	]
+
+class PyBufferProcs(Struct):
+	_fields_ = [("bf_getbuffer", getbufferproc), ("bf_releasebuffer", releasebufferproc)]
+
+PyTypeObject._fields_ = [ #pylint: disable=protected-access
+	("ob_base", PyVarObject),
+	('tp_name', ctypes.c_char_p),
+	# for allocation
+	('tp_basicsize', ctypes.c_ssize_t),
+	('tp_itemsize', ctypes.c_ssize_t),
+	# standard ops
+	('tp_dealloc', destructor),
+	('tp_vectorcall_offset', ctypes.c_ssize_t),  # used to be printfunc
+	('tp_getattr', getattrfunc),
+	('tp_setattr', setattrfunc),
+	('tp_as_async', ctypes.POINTER(PyAsyncMethods)),
+	('tp_repr', reprfunc),
+	# methods for standard classes
+	('tp_as_number', ctypes.POINTER(PyNumberMethods)),
+	('tp_as_sequence', ctypes.POINTER(PySequenceMethods)),
+	('tp_as_mapping', ctypes.POINTER(PyMappingMethods)),
+	# more standard ops
+	('tp_hash', hashfunc),
+	('tp_call', ternaryfunc),
+	('tp_str', reprfunc),
+	("tp_getattro", getattrofunc),
+	("tp_setattro", setattrofunc),
+	# get as IO buffer
+	("tp_as_buffer", ctypes.POINTER(PyBufferProcs)),
+	# feature flags
+	("_tp_flags", ctypes.c_ulong),
+	#docstring
+	("tp_doc", ctypes.c_char_p),
+	# misc
+	("tp_traverse", traverseproc),
+	("tp_clear", inquiry),
+	("tp_richcompare", richcmpfunc),
+	("tp_weaklistoffset", ctypes.c_ssize_t),
+	("tp_iter", getiterfunc),
+	("tp_iternext", iternextfunc),
+	("tp_methods", ctypes.c_void_p),  #TODO
+	("tp_members", ctypes.c_void_p),  #TODO
+	("tp_getset", ctypes.c_void_p),  #TODO
+	("tp_base", PyTypeObject_p),
+	("tp_dict", PyObject_p),
+	("tp_descr_get", descrgetfunc),
+	("tp_descr_set", descrsetfunc),
+	("tp_dictoffset", ctypes.c_ssize_t),
+	# instance creation/deleetion
+	("tp_init", initproc),
+	("tp_alloc", allocfunc),
+	("tp_new", newfunc),
+	("tp_free", freefunc),
+	("tp_is_gc", inquiry),
+	("tp_bases", PyObject_p),
+	("tp_mro", PyObject_p),
+	("tp_cache", PyObject_p),
+	("tp_subclasses", PyObject_p),
+	("tp_weaklist", PyObject_p),
+	("tp_del", destructor),
+	("tp_version_tag", ctypes.c_uint),
+	("tp_finalize", destructor),
+	("tp_vectorcall", vectorcallfunc)
+
+]
+
+#misc
+Py_None = PyObject.from_address(id(None))
+Py_Ellipsis = PyObject.from_address(id(Ellipsis))
+Py_NotImplemented = PyObject.from_address(id(NotImplemented))
+
+#imports at the bottom to avoid circular imports
+from .bytes import PyByteArrayObject, PyBytesObject, PyMemoryViewObject  #pylint: disable=wrong-import-position
+from .collections import PyListObject, PySetObject, PyTupleObject, rangeobject  #pylint: disable=wrong-import-position
+from .dict import PyDictObject  #pylint: disable=wrong-import-position
+from .iterators import (
+	calliterobject, dictiterobject, listiterobject, longrangeiterobject, rangeiterobject,
+	seqiterobject, setiterobject, tupleiterobject, filterobject, mapobject, zipobject, enumobject,
+	reversedobject
+)  #pylint: disable=wrong-import-position
+from .num import PyComplexObject, PyFloatObject, PyLongObject  #pylint: disable=wrong-import-position
+from .str import PyAsciiObject  #pylint: disable=wrong-import-position
+
+#used to find seqiterobject's addr
+class _A():
+	def __getitem__(self, val):
+		pass
+
+types = {
+	bytearray: PyByteArrayObject,
+	bytes: PyBytesObject,
+	memoryview: PyMemoryViewObject,
+	list: PyListObject,
+	tuple: PyTupleObject,
+	set: PySetObject,
+	frozenset: PySetObject,
+	dict: PyDictObject,
+	range: rangeobject,
+	type(iter(lambda: None, None)): calliterobject,
+	type(iter(_A())): seqiterobject,  #type: ignore
+	type(iter([])): listiterobject,
+	type(iter(())): tupleiterobject,
+	type(iter(set())): setiterobject,
+	type(iter({})): dictiterobject,
+	type(iter(range(0))): rangeiterobject,
+	type(iter(range(2**63))): longrangeiterobject,
+	filter: filterobject,
+	map: mapobject,
+	zip: zipobject,
+	enumerate: enumobject,
+	reversed: reversedobject,
+	int: PyLongObject,
+	float: PyFloatObject,
+	complex: PyComplexObject,
+	bool: PyLongObject,
+	str: PyAsciiObject,
+	type: PyTypeObject,
+	type(None): PyObject,
+	type(Ellipsis): PyObject,
+	type(NotImplemented): PyObject,
+	object: PyObject
+}
+del _A
+type_dict = {id(t): (t, None) for t in object.__subclasses__()}
+type_dict.update({id(t[0]): t for t in types.items()})
+
+def get_struct(val):
+	obj = PyObject.from_object(val)
+	try:
+		return obj.get_struct_type().from_object(val)
+	except (KeyError, AttributeError):
+		return obj
