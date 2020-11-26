@@ -1,7 +1,7 @@
 import ctypes
 from enum import Flag
 
-from .common import (Py_buffer, Py_hash_t, PyObject, PyObject_p, PyVarObject, Struct)
+from .common import (Py_buffer, Py_hash_t, PyObject, PyObject_p, PyVarObject, Struct, update_types)
 
 # https://github.com/python/cpython/blob/master/Include/cpython/bytesobject.h
 class PyBytesObject(Struct):
@@ -60,3 +60,5 @@ class PyMemoryViewObject(Struct):
 		return self.get_buffer()
 	
 	value = buf
+
+update_types({bytearray: PyByteArrayObject, bytes: PyBytesObject, memoryview: PyMemoryViewObject})

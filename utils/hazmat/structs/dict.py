@@ -1,7 +1,7 @@
 import ctypes
 
 from .base import Struct
-from .common import PyObject, PyObject_p, Py_hash_t
+from .common import PyObject, PyObject_p, Py_hash_t, update_types
 
 # https://github.com/python/cpython/blob/master/Include/cpython/dictobject.h
 # and https://github.com/python/cpython/blob/master/Objects/dict-common.h
@@ -67,3 +67,7 @@ PyDictObject._fields_ = [ #pylint: disable=protected-access
 	("ob_base", PyObject), ("ma_used", ctypes.c_ssize_t), ("ma_version_tag", ctypes.c_uint64),
 	("ma_keys", ctypes.POINTER(PyDictKeysObject)), ("ma_values", ctypes.POINTER(PyObject_p))
 ]
+
+update_types({
+	dict: PyDictObject
+})

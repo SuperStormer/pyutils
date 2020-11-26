@@ -3,7 +3,7 @@ import ctypes
 from utils.hazmat.misc import get_addr
 
 from .base import Struct
-from .common import Py_hash_t, PyObject, PyObject_p, PyVarObject
+from .common import Py_hash_t, PyObject, PyObject_p, PyVarObject, update_types
 from .num import PyLongObject
 
 # https://github.com/python/cpython/blob/master/Include/cpython/tupleobject.h
@@ -62,3 +62,10 @@ for field in ["start", "stop", "step", "length"]:
 		return ctypes.cast(getattr(self, "_" + field), ctypes.POINTER(PyLongObject))[0]
 	
 	setattr(rangeobject, field, get)
+update_types({
+	list: PyListObject,
+	tuple: PyTupleObject,
+	set: PySetObject,
+	frozenset: PySetObject,
+	range: rangeobject
+})

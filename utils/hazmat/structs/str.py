@@ -2,8 +2,7 @@ import ctypes
 from enum import Enum
 
 from .base import Struct, Union
-from .common import Py_hash_t, PyObject
-
+from .common import Py_hash_t, PyObject, update_types
 
 # https://github.com/python/cpython/blob/master/Include/cpython/unicodeobject.h
 class CharType(Enum):
@@ -106,3 +105,5 @@ class PyUnicodeObject(Struct, PyStrMixin):
 			arr_type = char_type.type * ascii_obj.length
 			field_addr = self.data.any
 			return arr_type.from_address(field_addr)
+
+update_types({str: PyAsciiObject})

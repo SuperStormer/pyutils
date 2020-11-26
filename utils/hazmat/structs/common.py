@@ -1,5 +1,5 @@
 import ctypes
-from enum import Flag
+from enum import Enum, Flag
 
 from utils.hazmat.misc import get_addr
 
@@ -18,6 +18,9 @@ class PyObject(Struct):
 	
 	def get_struct_type(self):
 		return type_dict[get_addr(self.ob_type)][1]
+	
+	def get_real(self):
+		return self.get_struct_type().from_address(ctypes.addressof(self))
 
 # https://github.com/python/cpython/blob/master/Include/cpython/object.h
 # and https://github.com/python/cpython/blob/master/Include/object.h
@@ -222,6 +225,72 @@ class PyAsyncMethods(Struct):
 class PyBufferProcs(Struct):
 	_fields_ = [("bf_getbuffer", getbufferproc), ("bf_releasebuffer", releasebufferproc)]
 
+# https://github.com/python/cpython/blob/master/Include/methodobject.h
+class PyMethodDef(Struct):
+	_fields_ = [("ml_name", ctypes.c_char_p), ("ml_doc", ctypes.c_char_p)]
+
+# https://github.com/python/cpython/blob/master/Include/structmember.h
+class PyMemberDef(Struct):
+	class Type(Enum):
+		SHORT = 0
+		INT = 1
+		LONG = 2
+		FLOAT = 3
+		DOUBLE = 4
+		STRING = 5
+		OBJECT = 6
+		CHAR = 7  # 1-character string
+		BYTE = 8  # 8-bit signed int
+		# unsigned variants:
+		UBYTE = 9
+		USHORT = 10
+		UINT = 11
+		ULONG = 12
+		
+		# strings contained in the structure
+		STRING_INPLACE = 13
+		
+		#bools contained in the structure (assumed char)
+		BOOL = 14
+		# ike T_OBJECT, but raises AttributeError
+		# when the value is NULL, instead of converting to None.
+		OBJECT_EX = 16
+		LONGLONG = 17
+		ULONGLONG = 18
+		
+		PYSSIZET = 19
+		NONE = 20
+	
+	class Flags(Flag):
+		READONLY = 1
+		READ_RESTRICTED = 2
+		PY_WRITE_RESTRICTED = 4
+		RESTRICTED = (READ_RESTRICTED | PY_WRITE_RESTRICTED)
+	
+	_fields_ = [
+		("name", ctypes.c_char_p), ("_type", ctypes.c_int), ("offset", ctypes.c_ssize_t),
+		("_flags", ctypes.c_int), ("doc", ctypes.c_char_p)
+	]
+	
+	@property
+	def type(self):
+		return PyMemberDef.Type(self._type)
+	
+	@property
+	def flags(self):
+		return PyMemberDef.Flags(self._flags)
+
+# https://github.com/python/cpython/blob/master/Include/descrobject.h
+getter = ctypes.CFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.c_void_p)
+setter = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.py_object, ctypes.c_void_p)
+
+class PyGetSetDef(Struct):
+	_fields_ = [
+		("name", ctypes.c_char_p), ("get", getter), ("set", setter), ("doc", ctypes.c_char_p),
+		("closure", ctypes.c_void_p)
+	]
+
+#type object fields
 PyTypeObject._fields_ = [ #pylint: disable=protected-access
 	("ob_base", PyVarObject),
 	('tp_name', ctypes.c_char_p),
@@ -258,15 +327,15 @@ PyTypeObject._fields_ = [ #pylint: disable=protected-access
 	("tp_weaklistoffset", ctypes.c_ssize_t),
 	("tp_iter", getiterfunc),
 	("tp_iternext", iternextfunc),
-	("tp_methods", ctypes.c_void_p),  #TODO
-	("tp_members", ctypes.c_void_p),  #TODO
-	("tp_getset", ctypes.c_void_p),  #TODO
+	("tp_methods", ctypes.POINTER(PyMethodDef)),
+	("tp_members", ctypes.POINTER(PyMemberDef)),
+	("tp_getset", ctypes.POINTER(PyGetSetDef)),
 	("tp_base", PyTypeObject_p),
 	("tp_dict", PyObject_p),
 	("tp_descr_get", descrgetfunc),
 	("tp_descr_set", descrsetfunc),
 	("tp_dictoffset", ctypes.c_ssize_t),
-	# instance creation/deleetion
+	# instance creation/deletion
 	("tp_init", initproc),
 	("tp_alloc", allocfunc),
 	("tp_new", newfunc),
@@ -283,66 +352,13 @@ PyTypeObject._fields_ = [ #pylint: disable=protected-access
 	("tp_vectorcall", vectorcallfunc)
 
 ]
-
-#misc
-Py_None = PyObject.from_address(id(None))
-Py_Ellipsis = PyObject.from_address(id(Ellipsis))
-Py_NotImplemented = PyObject.from_address(id(NotImplemented))
-
-#imports at the bottom to avoid circular imports
-from .bytes import PyByteArrayObject, PyBytesObject, PyMemoryViewObject  #pylint: disable=wrong-import-position
-from .collections import PyListObject, PySetObject, PyTupleObject, rangeobject  #pylint: disable=wrong-import-position
-from .dict import PyDictObject  #pylint: disable=wrong-import-position
-from .iterators import (
-	calliterobject, dictiterobject, listiterobject, longrangeiterobject, rangeiterobject,
-	seqiterobject, setiterobject, tupleiterobject, filterobject, mapobject, zipobject, enumobject,
-	reversedobject
-)  #pylint: disable=wrong-import-position
-from .num import PyComplexObject, PyFloatObject, PyLongObject  #pylint: disable=wrong-import-position
-from .str import PyAsciiObject  #pylint: disable=wrong-import-position
-
-#used to find seqiterobject's addr
-class _A():
-	def __getitem__(self, val):
-		pass
-
-types = {
-	bytearray: PyByteArrayObject,
-	bytes: PyBytesObject,
-	memoryview: PyMemoryViewObject,
-	list: PyListObject,
-	tuple: PyTupleObject,
-	set: PySetObject,
-	frozenset: PySetObject,
-	dict: PyDictObject,
-	range: rangeobject,
-	type(iter(lambda: None, None)): calliterobject,
-	type(iter(_A())): seqiterobject,  #type: ignore
-	type(iter([])): listiterobject,
-	type(iter(())): tupleiterobject,
-	type(iter(set())): setiterobject,
-	type(iter({})): dictiterobject,
-	type(iter(range(0))): rangeiterobject,
-	type(iter(range(2**63))): longrangeiterobject,
-	filter: filterobject,
-	map: mapobject,
-	zip: zipobject,
-	enumerate: enumobject,
-	reversed: reversedobject,
-	int: PyLongObject,
-	float: PyFloatObject,
-	complex: PyComplexObject,
-	bool: PyLongObject,
-	str: PyAsciiObject,
-	type: PyTypeObject,
-	type(None): PyObject,
-	type(Ellipsis): PyObject,
-	type(NotImplemented): PyObject,
-	object: PyObject
-}
-del _A
+#type handling utils
 type_dict = {id(t): (t, None) for t in object.__subclasses__()}
-type_dict.update({id(t[0]): t for t in types.items()})
+
+def update_types(types: dict):
+	type_dict.update({id(t[0]): t for t in types.items()})
+
+update_types({type: PyTypeObject})
 
 def get_struct(val):
 	obj = PyObject.from_object(val)
@@ -350,3 +366,19 @@ def get_struct(val):
 		return obj.get_struct_type().from_object(val)
 	except (KeyError, AttributeError):
 		return obj
+#heap type objects
+from .dict import PyDictKeysObject  # pylint: disable=wrong-import-position
+
+class PyHeapTypeObject(Struct):
+	_fields_ = [
+		("ht_type", PyTypeObject), ("as_async", PyAsyncMethods), ("as_number", PyNumberMethods),
+		("as_mapping", PyMappingMethods), ("as_sequence", PySequenceMethods),
+		("as_buffer", PyBufferProcs), ("ht_name", PyObject_p), ("ht_slots", PyObject_p),
+		("ht_qualname", PyObject_p), ("ht_cached_keys", ctypes.POINTER(PyDictKeysObject))
+	]
+
+#misc
+Py_None = PyObject.from_address(id(None))
+Py_Ellipsis = PyObject.from_address(id(Ellipsis))
+Py_NotImplemented = PyObject.from_address(id(NotImplemented))
+

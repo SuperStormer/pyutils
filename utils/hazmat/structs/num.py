@@ -1,6 +1,6 @@
 import ctypes
 from .base import Struct
-from .common import PyObject, PyVarObject
+from .common import PyObject, PyVarObject, update_types
 
 # https://github.com/python/cpython/blob/master/Include/longintrepr.h
 class PyLongObject(Struct):
@@ -51,3 +51,12 @@ class PyComplexObject(Struct):
 	@property
 	def value(self):
 		return complex(self.real, self.imag)
+
+update_types(
+	{
+	int: PyLongObject,
+	float: PyFloatObject,
+	complex: PyComplexObject,
+	bool: PyLongObject,
+	}
+)

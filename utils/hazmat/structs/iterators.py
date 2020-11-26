@@ -2,7 +2,7 @@
 import ctypes
 
 from .base import Struct
-from .common import PyObject, PyObject_p
+from .common import PyObject, PyObject_p, update_types
 from .collections import PyListObject, PyTupleObject, PySetObject
 from .dict import PyDictObject
 from .num import PyLongObject
@@ -166,3 +166,28 @@ class reversedobject(Struct):
 	@property
 	def value(self):
 		return self.seq
+
+#used to find seqiterobject's addr
+class _A():
+	def __getitem__(self, val):
+		pass
+
+update_types(
+	{
+	type(iter(lambda: None, None)): calliterobject,
+	type(iter(_A())): seqiterobject,  #type: ignore
+	type(iter([])): listiterobject,
+	type(iter(())): tupleiterobject,
+	type(iter(set())): setiterobject,
+	type(iter({})): dictiterobject,
+	type(iter(range(0))): rangeiterobject,
+	type(iter(range(2**63))): longrangeiterobject,
+	filter: filterobject,
+	map: mapobject,
+	zip: zipobject,
+	enumerate: enumobject,
+	reversed: reversedobject,
+	}
+)
+
+del _A
