@@ -1,9 +1,16 @@
 import math
+import typing
 
 from Crypto.Util.number import getPrime
 
 from utils.num.ntheory import modinv
 from utils.crypto.misc import bytes_to_long, long_to_bytes
+
+class KeyPair(typing.NamedTuple):
+	e: int
+	n: int
+	p: int
+	q: int
 
 def find_d(e, p, q):
 	return modinv(e, totient(p, q))
@@ -46,4 +53,4 @@ def gen_keypair(key_len, e=3):
 		q = getPrime(key_len // 2)
 		phi = totient(p, q)
 	n = p * q
-	return (e, n, p, q)
+	return KeyPair(e, n, p, q)

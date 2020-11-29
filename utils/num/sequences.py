@@ -1,5 +1,4 @@
 import itertools
-import decimal
 from functools import lru_cache
 
 def triangular_nums():
@@ -17,7 +16,7 @@ def fib():
 		yield a
 
 @lru_cache(maxsize=512)
-def nth_fib(n):
+def nth_fib(n: int) -> int:
 	""" uses fast doubling(see https://www.nayuki.io/page/fast-fibonacci-algorithms) """
 	if n == 0:
 		return 0
@@ -31,7 +30,7 @@ def nth_fib(n):
 		return x**2 + y**2
 
 @lru_cache(maxsize=512)
-def nth_fib2(n):
+def nth_fib2(n: int) -> int:
 	""" uses standard algo with lru_cache """
 	if n == 0:
 		return 0
@@ -41,16 +40,9 @@ def nth_fib2(n):
 
 phi = (1 + 5**0.5) / 2
 
-def nth_fib3(n):
+def nth_fib3(n: int) -> int:
 	""" uses Binet's formula with floats """
 	return round((phi**n - (1 - phi)**n) / (5**0.5))
-
-sq5 = decimal.Decimal(5).sqrt()
-phi2 = decimal.Decimal((1 + sq5) / 2)
-
-def nth_fib4(n):
-	""" uses Binet's formula with Decimals """
-	return int((((phi2**n) - (1 - phi2)**n) / sq5).to_integral_value())
 
 def collatz(n):
 	while n != 1:

@@ -3,7 +3,7 @@ from utils.num.ntheory import crt, egcd, modinv
 
 #used for rsa problems where m^e < n meaning to decrypt c you can just do invpow(c,e)
 #from https://stackoverflow.com/q/55436001/7941251
-def invpow(x, n):
+def invpow(x: int, n: int) -> int:
 	"""Finds the integer component of the n'th root of x,
 	an integer such that y ** n <= x < (y + 1) ** n.
 	"""
@@ -48,13 +48,13 @@ def lsb_parity_oracle(c, e, n, oracle):
 			lower = (lower + upper) // 2
 	return upper
 
-def wieners_attack(e, n):
+def wieners_attack(e: int, n: int) -> int:
 	#pylint: disable=import-outside-toplevel
 	#lazy imports to avoid slowing down initial load
 	from sympy.ntheory import continued_fraction_convergents, continued_fraction_iterator
 	from sympy import Rational
 	c = 2
-	convergents = continued_fraction_convergents(continued_fraction_iterator(Rational(e / n)))
+	convergents = continued_fraction_convergents(continued_fraction_iterator(Rational(e, n)))
 	for convergent in convergents:
 		d = convergent.denominator()
 		p = pow(c, d, n)

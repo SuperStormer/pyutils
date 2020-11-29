@@ -1,5 +1,3 @@
-import itertools
-
 def imgs_to_table(imgs, column_num):
 	"""imgs is (caption,image url) list. returns html table in string form """
 	result = """<style>
@@ -11,7 +9,7 @@ def imgs_to_table(imgs, column_num):
 	}
 </style>
 <table>"""
-	for i, (caption, url) in zip(itertools.count(0), imgs):
+	for i, (caption, url) in enumerate(imgs):
 		if i % column_num == 0:
 			result += "<tr>"
 		result += f"<td>{caption}<br><img src=\"{url}\"></td>"

@@ -1,14 +1,15 @@
 #TODO clean this up
 import itertools
 import math
-from numbers import Real, Integral
-from functools import reduce, lru_cache
+import string
+from numbers import Real
+from functools import reduce
 from typing import TypeVar, List, Callable, Generator, Sequence, Union, Set, Any, Tuple, Reversible, Iterator
-from inspect import signature
-from string import digits, ascii_uppercase, ascii_letters
+
 T = TypeVar("T")
 
-def merge_sequence(sequence: Sequence[T], merge_func: Callable[[T, T], T]) -> Generator[T, None, None]:
+def merge_sequence(sequence: Sequence[T], merge_func: Callable[[T, T], T]) -> Generator[T, None,
+	None]:
 	for element1, element2 in itertools.zip_longest(sequence[::2], sequence[1::2]):
 		if not element2:
 			yield element1
@@ -36,23 +37,6 @@ def optional_reduce(
 	if len(new_sequence) < len(original_sequence):
 		return optional_reduce(new_sequence, merge_func)
 	return sorted_sequence
-
-_base_alphabet = tuple(digits + ascii_uppercase)
-
-@lru_cache(maxsize=None)
-def int_to_base(
-	integer: int,
-	base: int,
-) -> str:
-	base_str = ""
-	for i in range(math.floor(math.log(integer, base)), -1, -1):
-		base_str += _base_alphabet[integer // (base**i)]
-		integer = integer % (base**i)
-	return base_str
-
-@lru_cache(maxsize=None)
-def is_palindrome(string: str) -> bool:
-	return string == "".join(reversed(string))
 
 E = TypeVar("E")
 
@@ -89,48 +73,15 @@ def compose(*funcs):
 def flip(func: Callable, *args):
 	return func(args[::-1])
 
-@lru_cache(maxsize=None)
-def is_prime(num):
-	if num == 2:
-		return True
-	if num == 1 or num == 0:
-		return False
-	if num % 2 == 0:
-		return False
-	for i in range(2, math.floor(math.sqrt(num)) + 1):
-		if num % i == 0:
-			return False
-	return True
-
-def palindromes(length: int, possible_chars=ascii_letters) -> Iterator[str]:
+def palindromes(length: int, possible_chars=string.ascii_letters) -> Iterator[str]:
 	combos = map("".join, itertools.product(possible_chars, repeat=length // 2))
 	if length % 2 == 1:  #odd num of digits
-		return (combo + str(middle_char) + "".join(reversed(combo)) for combo in combos for middle_char in possible_chars)
+		return (
+			combo + str(middle_char) + "".join(reversed(combo)) for combo in combos
+			for middle_char in possible_chars
+		)
 	else:
 		return (combo + "".join(reversed(combo)) for combo in combos)
 
-def palindrome_nums(length):
-	return map(int, palindromes(length, possible_chars=digits))
-
-@lru_cache(maxsize=None)
-def fibonnaci(n: int) -> int:
-	if n < 2:
-		return n
-	return fibonnaci(n - 1) + fibonnaci(n - 2)
-
-def fibonnaci_gen(num: int) -> Generator[int, None, None]:
-	a = 1
-	b = 1
-	yield 1
-	yield 1
-	for _ in range(num - 2):
-		c = a + b
-		yield c
-		a, b = b, c
-
-def factors(num: int) -> Set[int]:
-	step = 2 if num % 2 else 1
-	return set(
-		itertools.chain.from_iterable((i, num // i) for i in range(1,
-		math.floor(math.sqrt(num)) + 1, step) if num % i == 0)
-	)
+def palindrome_nums(length: int):
+	return map(int, palindromes(length, possible_chars=string.digits))

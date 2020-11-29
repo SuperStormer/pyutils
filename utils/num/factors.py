@@ -12,20 +12,21 @@ def sieve_of_eratosthenes(n: int):
 	return (i for i, prime in enumerate(nums) if prime)
 
 def prime_factors(n: int):
-	while True:
-		for i in range(2, math.isqrt(n) + 1):
-			if n % i == 0:
-				yield i
-				n //= i
-				break
-		else:
-			yield n
-			return
+	for i in range(2, math.isqrt(n) + 1):
+		while n % i == 0:
+			yield i
+			n //= i
+	if n != 1:
+		yield n
 
 def is_prime(n: int) -> bool:
-	return not any(n % i == 0 for i in range(2, math.isqrt(n) + 1)) and n != 1
+	if n == 2:
+		return True
+	if n < 2 or n % 2 == 0:
+		return False
+	return not any(n % i == 0 for i in range(3, math.isqrt(n) + 1, 2))
 
-def is_probable_prime(n: int, k: int = 5):
+def is_probable_prime(n: int, k: int = 5) -> bool:
 	"""Miller-Rabin test"""
 	if n in (0, 1):
 		return False
@@ -79,13 +80,13 @@ def proper_divisors(n: int):
 	if math.floor(math.sqrt(n)) == math.sqrt(n):
 		yield int(math.sqrt(n))
 
-def factors(n):
+def factors(n: int):
 	yield from proper_divisors(n)
 	yield n
 
-def is_abundant(n):
+def is_abundant(n: int):
 	return sum(proper_divisors(n)) > n
 
-def num_factors(n):
+def num_factors(n: int) -> int:
 	factors = Counter(prime_factors(n))
 	return math.prod(c + 1 for c in factors.values())
