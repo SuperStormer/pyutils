@@ -48,11 +48,12 @@ def lsb_parity_oracle(c, e, n, oracle):
 			lower = (lower + upper) // 2
 	return upper
 
-def wieners_attack(e: int, n: int) -> int:
+def wieners_attack(e: int, n: int):
+	""" returns d """
 	#pylint: disable=import-outside-toplevel
 	#lazy imports to avoid slowing down initial load
-	from sympy.ntheory import continued_fraction_convergents, continued_fraction_iterator
-	from sympy import Rational
+	from sympy.ntheory.continued_fraction import continued_fraction_convergents, continued_fraction_iterator
+	from sympy.core.numbers import Rational
 	c = 2
 	convergents = continued_fraction_convergents(continued_fraction_iterator(Rational(e, n)))
 	for convergent in convergents:
