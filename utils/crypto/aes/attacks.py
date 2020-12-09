@@ -30,6 +30,7 @@ def decrypt_ecb_suffix(oracle):
 		break
 	if common_prefix is None:
 		raise ValueError("Couldn't find prefix length")
+	assert prefix_len is not None
 	length = round_to_multiple(len(oracle(common_prefix)) - prefix_len, block_size)
 	known = bytearray()
 	for j in range(length):

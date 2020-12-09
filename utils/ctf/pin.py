@@ -1,7 +1,7 @@
+"""used for certain rev challs """
 from pathlib import Path
 import asyncio
 import subprocess
-"""used for certain rev challs """
 
 PIN = Path("/opt/pin/pin").expanduser()
 INSCOUNT32 = Path("/opt/pin/source/tools/ManualExamples/obj-ia32/inscount0.so").expanduser()
@@ -12,12 +12,14 @@ def pin_sync(filename, inscount, val, argv=False, out_file="inscount.out"):
 		subprocess.run(
 			[PIN, "-t", inscount, "-o", out_file, "--", filename, val],
 			check=False,
+			stdout=subprocess.DEVNULL
 		)
 	else:
 		subprocess.run(
 			[PIN, "-t", inscount, "-o", out_file, "--", filename],
 			input=val.encode() + b"\n",
 			check=False,
+			stdout=subprocess.DEVNULL
 		)
 	with open(out_file) as f:
 		output = f.read()

@@ -5,7 +5,7 @@ from utils.itertools2 import grouper
 def rand_aes_key():
 	return os.urandom(16)
 
-def detect_blocksize(oracle):
+def detect_blocksize(oracle) -> int:
 	initial_size = len(oracle(b""))
 	for i in itertools.count(1):
 		encrypted = oracle(b"A" * i)
