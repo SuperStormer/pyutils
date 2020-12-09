@@ -48,7 +48,7 @@ async def get_urls(keyword, limit=15, session=None, executor=None):
 async def _download_helper(path, url, session):
 	async with session.get(url) as response:
 		# from https://stackoverflow.com/questions/29674905/convert-content-type-header-into-file-extension
-		content_type = response.headers['content-type'].partition(';')[0].strip()
+		content_type = response.headers["content-type"].partition(";")[0].strip()
 		if content_type.partition("/")[0] == "image":
 			try:
 				ext = "." + (
@@ -65,7 +65,7 @@ async def _download_helper(path, url, session):
 		
 		filename = f"{path}{ext}"
 		# from https://stackoverflow.com/questions/38358521/alternative-of-urllib-urlretrieve-in-python-3-5
-		async with aiofiles.open(filename, 'wb') as out_file:
+		async with aiofiles.open(filename, "wb") as out_file:
 			block_size = 1024 * 8
 			while True:
 				block = await response.content.read(block_size)  # pylint: disable=no-member

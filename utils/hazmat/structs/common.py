@@ -25,7 +25,7 @@ class PyObject(Struct):
 # https://github.com/python/cpython/blob/master/Include/cpython/object.h
 # and https://github.com/python/cpython/blob/master/Include/object.h
 # also based on https://github.com/clarete/forbiddenfruit/blob/master/forbiddenfruit/__init__.py
-# PyTypeObject can't be moved to a separate module because that causes errors due to codependency
+# PyTypeObject can"t be moved to a separate module because that causes errors due to codependency
 class PyTypeObject(Struct):
 	class Flags(Flag):
 		# Set if the type object is dynamically allocated
@@ -34,9 +34,9 @@ class PyTypeObject(Struct):
 		BASETYPE = 1 << 10
 		# Set if the type implements the vectorcall protocol (PEP 590)
 		HAVE_VECTORCALL = 1 << 11
-		# Set if the type is 'ready' -- fully initialized
+		# Set if the type is "ready" -- fully initialized
 		READY = 1 << 12
-		# Set while the type is being 'readied', to prevent recursive ready calls
+		# Set while the type is being "readied", to prevent recursive ready calls
 		READYING = 1 << 13
 		# Objects support garbage collection (see objimpl.h)
 		HAVE_GC = 1 << 14
@@ -78,7 +78,7 @@ PyObject_p = ctypes.POINTER(PyObject)
 class PyVarObject(Struct):
 	_fields_ = [("ob_base", PyObject), ("ob_size", ctypes.c_ssize_t)]
 
-#This is here due to codependencies and I don't want to trigger some weird error
+#This is here due to codependencies and I don"t want to trigger some weird error
 class Py_buffer(Struct):  #pylint: disable=invalid-name
 	_fields_ = [
 		("buf", ctypes.c_void_p),
@@ -155,60 +155,60 @@ releasebufferproc = ctypes.CFUNCTYPE(None, ctypes.py_object, ctypes.POINTER(Py_b
 class PyNumberMethods(Struct):
 	_fields_ = [
 		# normal ops
-		('nb_add', binaryfunc),
-		('nb_subtract', binaryfunc),
-		('nb_multiply', binaryfunc),
-		('nb_remainder', binaryfunc),
-		('nb_divmod', binaryfunc),
-		('nb_power', binaryfunc),
-		('nb_negative', unaryfunc),
-		('nb_positive', unaryfunc),
-		('nb_absolute', unaryfunc),
-		('nb_bool', inquiry),
-		('nb_invert', unaryfunc),
-		('nb_lshift', binaryfunc),
-		('nb_rshift', binaryfunc),
-		('nb_and', binaryfunc),
-		('nb_xor', binaryfunc),
-		('nb_or', binaryfunc),
-		('nb_int', unaryfunc),
-		('nb_reserved', ctypes.c_void_p),  # used to be nb_long 
-		('nb_float', unaryfunc),
+		("nb_add", binaryfunc),
+		("nb_subtract", binaryfunc),
+		("nb_multiply", binaryfunc),
+		("nb_remainder", binaryfunc),
+		("nb_divmod", binaryfunc),
+		("nb_power", binaryfunc),
+		("nb_negative", unaryfunc),
+		("nb_positive", unaryfunc),
+		("nb_absolute", unaryfunc),
+		("nb_bool", inquiry),
+		("nb_invert", unaryfunc),
+		("nb_lshift", binaryfunc),
+		("nb_rshift", binaryfunc),
+		("nb_and", binaryfunc),
+		("nb_xor", binaryfunc),
+		("nb_or", binaryfunc),
+		("nb_int", unaryfunc),
+		("nb_reserved", ctypes.c_void_p),  # used to be nb_long 
+		("nb_float", unaryfunc),
 		# inplace ops
-		('nb_inplace_add', binaryfunc),
-		('nb_inplace_subtract', binaryfunc),
-		('nb_inplace_multiply', binaryfunc),
-		('nb_inplace_remainder', binaryfunc),
-		('nb_inplace_power', ternaryfunc),
-		('nb_inplace_lshift', binaryfunc),
-		('nb_inplace_rshift', binaryfunc),
-		('nb_inplace_and', binaryfunc),
-		('nb_inplace_xor', binaryfunc),
-		('nb_inplace_or', binaryfunc),
+		("nb_inplace_add", binaryfunc),
+		("nb_inplace_subtract", binaryfunc),
+		("nb_inplace_multiply", binaryfunc),
+		("nb_inplace_remainder", binaryfunc),
+		("nb_inplace_power", ternaryfunc),
+		("nb_inplace_lshift", binaryfunc),
+		("nb_inplace_rshift", binaryfunc),
+		("nb_inplace_and", binaryfunc),
+		("nb_inplace_xor", binaryfunc),
+		("nb_inplace_or", binaryfunc),
 		# division
-		('nb_floor_divide', binaryfunc),
-		('nb_true_divide', binaryfunc),
-		('nb_inplace_floor_divide', binaryfunc),
-		('nb_inplace_true_divide', binaryfunc),
+		("nb_floor_divide", binaryfunc),
+		("nb_true_divide", binaryfunc),
+		("nb_inplace_floor_divide", binaryfunc),
+		("nb_inplace_true_divide", binaryfunc),
 		# __index__()
-		('nb_index', unaryfunc),
+		("nb_index", unaryfunc),
 		# matmul
-		('nb_matrix_multiply', binaryfunc),
-		('nb_inplace_matrix_multiply', binaryfunc),
+		("nb_matrix_multiply", binaryfunc),
+		("nb_inplace_matrix_multiply", binaryfunc),
 	]
 
 class PySequenceMethods(Struct):
 	_fields_ = [
-		('sq_length', lenfunc),
-		('sq_concat', binaryfunc),
-		('sq_repeat', ssizeargfunc),
-		('sq_item', ssizeargfunc),
-		('was_sq_slice', ctypes.c_void_p),
-		('sq_ass_item', ssizeobjargproc),
-		('was_sq_ass_slice', ctypes.c_void_p),
-		('sq_contains', objobjproc),
-		('sq_inplace_concat', binaryfunc),
-		('sq_inplace_repeat', ssizeargfunc),
+		("sq_length", lenfunc),
+		("sq_concat", binaryfunc),
+		("sq_repeat", ssizeargfunc),
+		("sq_item", ssizeargfunc),
+		("was_sq_slice", ctypes.c_void_p),
+		("sq_ass_item", ssizeobjargproc),
+		("was_sq_ass_slice", ctypes.c_void_p),
+		("sq_contains", objobjproc),
+		("sq_inplace_concat", binaryfunc),
+		("sq_inplace_repeat", ssizeargfunc),
 	]
 
 class PyMappingMethods(Struct):
@@ -293,25 +293,25 @@ class PyGetSetDef(Struct):
 #type object fields
 PyTypeObject._fields_ = [ #pylint: disable=protected-access
 	("ob_base", PyVarObject),
-	('tp_name', ctypes.c_char_p),
+	("tp_name", ctypes.c_char_p),
 	# for allocation
-	('tp_basicsize', ctypes.c_ssize_t),
-	('tp_itemsize', ctypes.c_ssize_t),
+	("tp_basicsize", ctypes.c_ssize_t),
+	("tp_itemsize", ctypes.c_ssize_t),
 	# standard ops
-	('tp_dealloc', destructor),
-	('tp_vectorcall_offset', ctypes.c_ssize_t),  # used to be printfunc
-	('tp_getattr', getattrfunc),
-	('tp_setattr', setattrfunc),
-	('tp_as_async', ctypes.POINTER(PyAsyncMethods)),
-	('tp_repr', reprfunc),
+	("tp_dealloc", destructor),
+	("tp_vectorcall_offset", ctypes.c_ssize_t),  # used to be printfunc
+	("tp_getattr", getattrfunc),
+	("tp_setattr", setattrfunc),
+	("tp_as_async", ctypes.POINTER(PyAsyncMethods)),
+	("tp_repr", reprfunc),
 	# methods for standard classes
-	('tp_as_number', ctypes.POINTER(PyNumberMethods)),
-	('tp_as_sequence', ctypes.POINTER(PySequenceMethods)),
-	('tp_as_mapping', ctypes.POINTER(PyMappingMethods)),
+	("tp_as_number", ctypes.POINTER(PyNumberMethods)),
+	("tp_as_sequence", ctypes.POINTER(PySequenceMethods)),
+	("tp_as_mapping", ctypes.POINTER(PyMappingMethods)),
 	# more standard ops
-	('tp_hash', hashfunc),
-	('tp_call', ternaryfunc),
-	('tp_str', reprfunc),
+	("tp_hash", hashfunc),
+	("tp_call", ternaryfunc),
+	("tp_str", reprfunc),
 	("tp_getattro", getattrofunc),
 	("tp_setattro", setattrofunc),
 	# get as IO buffer

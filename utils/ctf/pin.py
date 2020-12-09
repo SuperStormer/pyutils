@@ -3,20 +3,20 @@ import asyncio
 import subprocess
 """used for certain rev challs """
 
-PIN = Path("~/programs/pin/pin").expanduser()
-INSCOUNT32 = Path("~/programs/pin/source/tools/ManualExamples/obj-ia32/inscount0.so").expanduser()
-INSCOUNT64 = Path("~/programs/pin/source/tools/ManualExamples/obj-intel64/inscount0.so").expanduser()
+PIN = Path("/opt/pin/pin").expanduser()
+INSCOUNT32 = Path("/opt/pin/source/tools/ManualExamples/obj-ia32/inscount0.so").expanduser()
+INSCOUNT64 = Path("/opt/pin/source/tools/ManualExamples/obj-intel64/inscount0.so").expanduser()
 
-def pin_sync(filename, inscount, passwd, argv=False, out_file="inscount.out"):
+def pin_sync(filename, inscount, val, argv=False, out_file="inscount.out"):
 	if argv:
 		subprocess.run(
-			[PIN, "-t", inscount, "-o", out_file, "--", filename, passwd],
+			[PIN, "-t", inscount, "-o", out_file, "--", filename, val],
 			check=False,
 		)
 	else:
 		subprocess.run(
 			[PIN, "-t", inscount, "-o", out_file, "--", filename],
-			input=passwd.encode() + b"\n",
+			input=val.encode() + b"\n",
 			check=False,
 		)
 	with open(out_file) as f:

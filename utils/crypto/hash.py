@@ -10,7 +10,7 @@ def sha1_padding(msg, forced_len=None):
 	else:
 		msg_len = forced_len * 8
 	m = -(msg_len + 1 + 64) % 512
-	msg = (msg + bytes([0b10000000]) + b'\x00' * (m // 8) + msg_len.to_bytes(8, byteorder='big'))
+	msg = (msg + bytes([0b10000000]) + b"\x00" * (m // 8) + msg_len.to_bytes(8, byteorder="big"))
 	return msg
 
 def sha1(msg, state=None, msg_added_len=None):
@@ -64,7 +64,7 @@ def sha1(msg, state=None, msg_added_len=None):
 		h2 = (h2 + c) & max_word
 		h3 = (h3 + d) & max_word
 		h4 = (h4 + e) & max_word
-	return b''.join(h.to_bytes(4, byteorder="big") for h in (h0, h1, h2, h3, h4))
+	return b"".join(h.to_bytes(4, byteorder="big") for h in (h0, h1, h2, h3, h4))
 
 def secret_prefix_mac(msg, key, hash_func=sha1):
 	return hash_func(key + msg)

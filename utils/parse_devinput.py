@@ -9,7 +9,7 @@ from .keycodes import key_codes
 # See https://github.com/torvalds/linux/blob/v5.5-rc5/include/uapi/linux/input.h#L28
 # Stands for: long int, long int, unsigned short, unsigned short, unsigned int
 
-FORMAT = 'llHHI'
+FORMAT = "llHHI"
 EVENT_SIZE = struct.calcsize(FORMAT)
 
 # keyboard layouts are dicts that map keynames to (normal,shift,alt gr) chars
@@ -37,19 +37,19 @@ keyboard_layout_azerty = {
 	"Z": ("w", "W"),
 	"E": ("e", "E", "€"),
 	"1": ("&", "1"),  # no alt gr mapping
-	'MINUS': (')', '°', ']'),
-	'EQUAL': ('=', '+', '}'),
-	'LEFTBRACE': ("^", '¨'),
-	'RIGHTBRACE': ('$', '£', '¤'),
-	'SEMICOLON': ('m', 'M'),
-	'APOSTROPHE': ('ù', '%'),
-	'BACKSLASH': ('*', 'µ'),
-	'GRAVE': ('²', ''),
-	'M': (',', '?'),
-	'COMMA': (';', '.'),
-	'DOT': (':', '/'),
-	'SLASH': ('!', '§'),
-	'102ND': ('<', '>')
+	"MINUS": (")", "°", "]"),
+	"EQUAL": ("=", "+", "}"),
+	"LEFTBRACE": ("^", "¨"),
+	"RIGHTBRACE": ("$", "£", "¤"),
+	"SEMICOLON": ("m", "M"),
+	"APOSTROPHE": ("ù", "%"),
+	"BACKSLASH": ("*", "µ"),
+	"GRAVE": ("²", ""),
+	"M": (",", "?"),
+	"COMMA": (";", "."),
+	"DOT": (":", "/"),
+	"SLASH": ("!", "§"),
+	"102ND": ("<", ">")
 }
 num_pad_map = {"ENTER": "\n", "SLASH": "\\", "ASTERISK": "*", "MINUS": "-", "PLUS": "+", "DOT": "."}
 
@@ -58,11 +58,11 @@ def parse_devinput(in_file, keyboard_layout=None):
 		keyboard_layout = keyboard_layout_qwerty
 	out = []
 	mode = 0
-	for event in iter(lambda: in_file.read(EVENT_SIZE), b''):
+	for event in iter(lambda: in_file.read(EVENT_SIZE), b""):
 		(tv_sec, tv_usec, type_, code, value) = struct.unpack(FORMAT, event) #pylint: disable=unused-variable
 		
 		if type_ != 0 or code != 0 or value != 0:
-			# print(f'{tv_sec}.{tv_usec}, {type}, {code}, {value}, {value:08b}')
+			# print(f"{tv_sec}.{tv_usec}, {type}, {code}, {value}, {value:08b}")
 			
 			if type_ == 0x01:  # EV_KEY
 				key = key_codes[code][4:]

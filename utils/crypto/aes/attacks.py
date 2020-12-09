@@ -6,6 +6,7 @@ from utils.crypto.xor import decrypt_repeating_key_xor, xor
 from utils.itertools2 import grouper
 from utils.num.misc import round_to_multiple
 
+from .aes import aes_ecb
 from .misc import detect_blocksize, detect_ecb
 
 def decrypt_ecb_suffix(oracle):
@@ -89,6 +90,6 @@ def extract_cbc_iv(s, oracle):
 def decrypt_active_dir_gpo(s):
 	return aes_ecb(
 		base64.b64decode(s),
-		b'\x4e\x99\x06\xe8\xfc\xb6\x6c\xc9\xfa\xf4\x93\x10\x62\x0f\xfe\xe8\xf4\x96\xe8\x06\xcc\x05\x79\x90\x20\x9b\x09\xa4\x33\xb6\x6c\x1b',
+		b"\x4e\x99\x06\xe8\xfc\xb6\x6c\xc9\xfa\xf4\x93\x10\x62\x0f\xfe\xe8\xf4\x96\xe8\x06\xcc\x05\x79\x90\x20\x9b\x09\xa4\x33\xb6\x6c\x1b",
 		"decrypt"
 	).replace(b"\x00", b"").strip()
