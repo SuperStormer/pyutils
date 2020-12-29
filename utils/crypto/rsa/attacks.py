@@ -1,3 +1,4 @@
+import math
 import random
 from utils.num.ntheory import crt, egcd, modinv
 
@@ -21,23 +22,36 @@ def invpow(x: int, n: int) -> int:
 			return mid
 	return mid + 1
 
+# https://github.com/ashutosh1206/Crypton/tree/master/RSA-encryption/Factorisation-Fermat
+def fermats_factorization(n):
+	""" factor n by using difference of squares, only works if factors are close """
+	a = math.isqrt(n) + 1
+	b_2 = a**2 - n  # b squared
+	while math.isqrt(b_2)**2 != b_2:
+		a += 1
+		b_2 = a**2 - n
+	b = math.isqrt(b_2)
+	return (a - b, a + b)
+
+# see cryptopals 40
 def hastad_broadcast_attack(cts, n_s, e):
-	# see cryptopals 40
 	return invpow(crt(cts, n_s), e)
 
+# see cryptopals 41
 def decrypt_unpadded_oracle(c, e, n, oracle):
-	# see cryptopals 41
 	s = random.randint(2, n - 1)
 	c_prime = (pow(s, e, n) * c) % n
 	p_prime = oracle(c_prime)
 	return (p_prime * modinv(s, n)) % n
 
 def common_mod_attack(c1, c2, e1, e2, n):
+	""" pt is encrypted using 2 different e's but same n"""
 	gcd, a, b = egcd(e1, e2)
 	ct = (pow(c1, a, n) * pow(c2, b, n)) % n
 	return invpow(ct, gcd)
 
 def lsb_parity_oracle(c, e, n, oracle):
+	# https://github.com/ashutosh1206/Crypton/tree/master/RSA-encryption/Attack-LSBit-Oracle
 	upper = n
 	lower = 0
 	for _ in range(n.bit_length()):
