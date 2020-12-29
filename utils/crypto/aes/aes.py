@@ -1,6 +1,6 @@
+"""actual encryption/decryption funcs"""
 import itertools
 import struct
-"""actual encryption/decryption funcs"""
 from Crypto.Cipher import AES
 from utils.itertools2 import grouper
 
@@ -20,6 +20,8 @@ def aes_ecb(s, key, mode, no_pad=False):
 	return func(s)
 
 def aes_cbc(s, key, iv, mode):
+	if mode not in ("encrypt", "decrypt"):
+		raise ValueError(f"Illegal mode {mode!r} is not 'decrypt' or 'encrypt'")
 	if mode == "encrypt":
 		s = pad_pkcs7(s, 16)
 	blocks = map(bytes, grouper(s, 16))
