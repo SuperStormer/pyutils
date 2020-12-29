@@ -12,5 +12,5 @@ s = args.string
 if s is None:
 	s = sys.stdin.read().strip()
 print(
-	"\n".join((f"{c[1]}:" if args.shift else "") + c[0] for c in caesar_all(s, alphabet_only))
+	"\n".join((f"{c.shift}:" if args.shift else "") + c.text for c in caesar_all(s, alphabet_only))
 )

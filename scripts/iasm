@@ -193,7 +193,7 @@ class AsmRepl():
 			as_bytes=True
 		)[0]
 		#4. run the user input
-		# this is a separate function call to reset rip to 0
+		# this is a separate call to ks.asm to reset rip to 0 for jumps
 		user_code = self.ks.asm(asm, as_bytes=True)[0]
 		if user_code is not None:
 			code += user_code
