@@ -32,6 +32,10 @@ class PyFloatObject(Struct):
 	@property
 	def value(self):
 		return self.ob_fval
+	
+	@value.setter
+	def value(self, val):
+		self.ob_fval = val
 
 # https://github.com/python/cpython/blob/master/Include/complexobject.h
 class Py_complex(Struct):  #pylint: disable=invalid-name
@@ -44,13 +48,26 @@ class PyComplexObject(Struct):
 	def real(self):
 		return self.cval.real
 	
+	@real.setter
+	def real(self, val):
+		self.cval.real = val
+	
 	@property
 	def imag(self):
 		return self.cval.imag
 	
+	@imag.setter
+	def imag(self, val):
+		self.cval.real.imag = val
+	
 	@property
 	def value(self):
 		return complex(self.real, self.imag)
+	
+	@value.setter
+	def value(self, val: complex):
+		self.cval.real = val.real
+		self.cval.imag = val.imag
 
 update_types(
 	{

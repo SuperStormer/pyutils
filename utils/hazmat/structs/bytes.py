@@ -23,6 +23,11 @@ class PyByteArrayObject(Struct):
 	@property
 	def value(self):
 		return self.ob_start
+	
+	@value.setter
+	def value(self, val):
+		self.ob_start = val
+		self.ob_base.ob_size = len(val)
 
 # https://github.com/python/cpython/blob/master/Include/memoryobject.h
 # and https://github.com/python/cpython/blob/master/Include/cpython/object.h

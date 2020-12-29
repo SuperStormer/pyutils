@@ -43,7 +43,7 @@ class calliterobject(Struct):
 	
 	value = callable
 
-# https://github.com/python/cpython/blob/main/Objects/listobject.c
+# https://github.com/python/cpython/blob/master/Objects/listobject.c
 class listiterobject(Struct):
 	_fields_ = [
 		("ob_base", PyObject), ("it_index", ctypes.c_ssize_t),
@@ -54,7 +54,7 @@ class listiterobject(Struct):
 	def value(self):
 		return self.it_seq[0]
 
-# https://github.com/python/cpython/blob/main/Objects/tupleobject.c
+# https://github.com/python/cpython/blob/master/Objects/tupleobject.c
 class tupleiterobject(Struct):
 	_fields_ = [
 		("ob_base", PyObject), ("it_index", ctypes.c_ssize_t),

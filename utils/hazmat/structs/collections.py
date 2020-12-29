@@ -62,10 +62,12 @@ for field in ["start", "stop", "step", "length"]:
 		return ctypes.cast(getattr(self, "_" + field), ctypes.POINTER(PyLongObject))[0]
 	
 	setattr(rangeobject, field, get)
-update_types({
+update_types(
+	{
 	list: PyListObject,
 	tuple: PyTupleObject,
 	set: PySetObject,
 	frozenset: PySetObject,
 	range: rangeobject
-})
+	}
+)
