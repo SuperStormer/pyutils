@@ -20,6 +20,7 @@ def fix_png_size(filename, max_width=10000, max_height=10000):
 		fix_png_size2(f, max_width, max_height)
 
 def main():
+	#pylint: disable=import-outside-toplevel
 	import sys
 	print(fix_png_size(sys.argv[1]))
 

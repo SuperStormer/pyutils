@@ -1,3 +1,5 @@
+#pylint: disable=all
+""" from the itertools recipes section of https://docs.python.org/3/library/itertools.html"""
 import operator
 import collections
 import random
@@ -5,7 +7,6 @@ from itertools import (
 	chain, combinations, count, cycle, filterfalse, groupby, islice, repeat, starmap, tee,
 	zip_longest
 )
-""" from the itertools recipes section of https://docs.python.org/3/library/itertools.html"""
 
 def take(n, iterable):
 	"Return first n items of the iterable as a list"

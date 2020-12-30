@@ -1,7 +1,8 @@
-import string
 import itertools
-from .misc import english_like
+import string
 from typing import NamedTuple
+
+from .misc import english_like
 
 class CaesarResult(NamedTuple):
 	text: str

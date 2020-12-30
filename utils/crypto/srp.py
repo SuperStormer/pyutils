@@ -1,3 +1,4 @@
+#pylint: disable=invalid-name
 import hashlib
 import hmac
 from random import randint
@@ -17,7 +18,7 @@ def gen_verifier(password):
 	verifier = pow(g, x, N)
 	return salt, verifier
 
-async def server_validate(get_verifier, send, recv):
+async def server_validate(get_verifier, send, recv):  #pylint: disable=too-many-locals
 	email = await recv()
 	salt, verifier = get_verifier(email)
 	A = await recv()

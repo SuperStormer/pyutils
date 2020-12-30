@@ -7,7 +7,10 @@ def rotations(n):
 
 def num_to_word(n):
 	ones = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
-	teens = ["ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"]
+	teens = [
+		"ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen",
+		"eighteen", "nineteen"
+	]
 	tens = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
 	prefix = ""
 	if n == 0:

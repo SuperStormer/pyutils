@@ -1,9 +1,9 @@
+""" for weird challs like NahamCon CTF 2020 B'omarr Style """
 import base64
 import hashlib
 import hmac
 import json
 import math
-""" for weird challs like NahamCon CTF 2020 B'omarr Style """
 
 def non_json_jwt_encode(s: bytes, key, extra_headers=None):
 	header_dict = {"alg": "HS256", "typ": "JWT"}

@@ -4,7 +4,9 @@ import math
 import string
 from numbers import Real
 from functools import reduce
-from typing import TypeVar, List, Callable, Generator, Sequence, Union, Set, Any, Tuple, Reversible, Iterator
+from typing import (
+	TypeVar, List, Callable, Generator, Sequence, Union, Set, Any, Tuple, Reversible, Iterator
+)
 
 T = TypeVar("T")
 

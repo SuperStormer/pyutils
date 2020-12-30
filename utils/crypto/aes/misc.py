@@ -11,6 +11,7 @@ def detect_blocksize(oracle) -> int:
 		encrypted = oracle(b"A" * i)
 		if len(encrypted) > initial_size:
 			return len(encrypted) - initial_size
+	raise ValueError("This should never happen")
 
 def detect_ecb(oracle):
 	plaintext = b"A" * 64

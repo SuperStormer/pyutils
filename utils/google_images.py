@@ -47,7 +47,7 @@ async def get_urls(keyword, limit=15, session=None, executor=None):
 
 async def _download_helper(path, url, session):
 	async with session.get(url) as response:
-		# from https://stackoverflow.com/questions/29674905/convert-content-type-header-into-file-extension
+		# from https://stackoverflow.com/q/29674905/7941251
 		content_type = response.headers["content-type"].partition(";")[0].strip()
 		if content_type.partition("/")[0] == "image":
 			try:
@@ -64,7 +64,7 @@ async def _download_helper(path, url, session):
 			raise InvalidExtensionError("No extensions found.")
 		
 		filename = f"{path}{ext}"
-		# from https://stackoverflow.com/questions/38358521/alternative-of-urllib-urlretrieve-in-python-3-5
+		# from https://stackoverflow.com/q/38358521/7941251
 		async with aiofiles.open(filename, "wb") as out_file:
 			block_size = 1024 * 8
 			while True:
@@ -90,6 +90,7 @@ async def download_images(
 		)
 
 def main():
+	#pylint: disable=import-outside-toplevel
 	import argparse
 	parser = argparse.ArgumentParser()
 	parser.add_argument("keyword")

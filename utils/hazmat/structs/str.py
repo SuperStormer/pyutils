@@ -84,7 +84,7 @@ class PyCompactUnicodeObject(Struct, PyStrMixin):
 		return (char_type * self._base.length).from_address(end_addr)
 
 class PyUnicodeObject(Struct, PyStrMixin):
-	class Data(Union):
+	class Data(Union):  #pylint: disable=too-few-public-methods
 		#pylint: disable=no-member
 		_fields_ = [
 			("any", ctypes.c_void_p),

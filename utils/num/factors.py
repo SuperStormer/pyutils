@@ -1,4 +1,3 @@
-import itertools
 import random
 import math
 from collections import Counter
@@ -88,5 +87,5 @@ def is_abundant(n: int):
 	return sum(proper_divisors(n)) > n
 
 def num_factors(n: int) -> int:
-	factors = Counter(prime_factors(n))
-	return math.prod(c + 1 for c in factors.values())
+	factors_counter = Counter(prime_factors(n))
+	return math.prod(c + 1 for c in factors_counter.values())

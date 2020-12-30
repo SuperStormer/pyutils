@@ -1,3 +1,4 @@
+#pylint: disable=unused-import,unused-wildcard-import,wildcard-import
 import itertools
 import json
 import os

@@ -45,7 +45,7 @@ class PyManagedBufferObject(Struct):
 class PyMemoryViewObject(Struct):
 	class Flags(Flag):
 		RELEASE = 1
-		C = 2
+		C = 2  #pylint: disable=invalid-name
 		FORTRAN = 4
 		SCALAR = 8
 		PIL = 16

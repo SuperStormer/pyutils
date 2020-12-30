@@ -45,8 +45,8 @@ async def blind_sqli_async(inject_template, sqli_oracle, chars=_chars):
 		for coro in asyncio.as_completed(coros):
 			success, curr_val = await coro
 			if success:
-				for coro in coros:
-					coro.cancel()
+				for coro2 in coros:
+					coro2.cancel()
 				val = curr_val
 				break
 		else:

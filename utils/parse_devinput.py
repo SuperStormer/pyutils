@@ -59,7 +59,7 @@ def parse_devinput(in_file, keyboard_layout=None):
 	out = []
 	mode = 0
 	for event in iter(lambda: in_file.read(EVENT_SIZE), b""):
-		(tv_sec, tv_usec, type_, code, value) = struct.unpack(FORMAT, event) #pylint: disable=unused-variable
+		(tv_sec, tv_usec, type_, code, value) = struct.unpack(FORMAT, event)  #pylint: disable=unused-variable
 		
 		if type_ != 0 or code != 0 or value != 0:
 			# print(f"{tv_sec}.{tv_usec}, {type}, {code}, {value}, {value:08b}")
@@ -108,6 +108,7 @@ def parse_devinput(in_file, keyboard_layout=None):
 	return "".join(out)
 
 def main():
+	#pylint: disable=import-outside-toplevel
 	import argparse
 	parser = argparse.ArgumentParser()
 	parser.add_argument("file", type=argparse.FileType("rb"))

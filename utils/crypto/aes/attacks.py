@@ -88,7 +88,7 @@ def extract_cbc_iv(s, oracle):
 	plaintext = oracle(modified)
 	return xor(plaintext[:16], plaintext[-16:])
 
-#partially based on https://github.com/PowerShellMafia/PowerSploit/blob/master/Exfiltration/Get-GPPPassword.ps1
+# partially based on https://github.com/PowerShellMafia/PowerSploit/blob/master/Exfiltration/Get-GPPPassword.ps1
 # key from https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-gppref/2c15cbf0-f086-4c74-8b70-1f2fa45dd4be
 def decrypt_active_dir_gpo(s):
 	return unpad_pkcs7(

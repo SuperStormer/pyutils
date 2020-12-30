@@ -1,8 +1,8 @@
 import itertools
 
-from ..bits import rol
-from ..itertools2 import grouper
-from .xor import xor
+from utils.bits import rol
+from utils.itertools2 import grouper
+from utils.crypto.xor import xor
 
 def sha1_padding(msg, forced_len=None):
 	if forced_len is None:
@@ -13,7 +13,7 @@ def sha1_padding(msg, forced_len=None):
 	msg = (msg + bytes([0b10000000]) + b"\x00" * (m // 8) + msg_len.to_bytes(8, byteorder="big"))
 	return msg
 
-def sha1(msg, state=None, msg_added_len=None):
+def sha1(msg, state=None, msg_added_len=None):  #pylint: disable=too-many-locals
 	if state is None:
 		h0 = 0x67452301
 		h1 = 0xEFCDAB89
@@ -81,6 +81,7 @@ def sha1_hash_extension(orig_msg, new_msg, oracle, key_lens=None):
 		forged_msg = orig_msg + glue_padding + new_msg
 		if oracle(forged_msg) == forged_mac:
 			return (forged_msg, forged_mac)
+	raise ValueError("No key_len is valid")
 
 def hmac(key, msg, hash_func, block_size=64):
 	if len(key) > block_size:

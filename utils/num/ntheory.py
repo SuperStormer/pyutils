@@ -1,10 +1,13 @@
-import math
 """Number Theory functions"""
+import math
+import sys
 
-# use math.lcm in Python 3.9+
-# from https://stackoverflow.com/a/51716959/7941251
-def lcm(a: int, b: int) -> int:
-	return abs(a * b) // math.gcd(a, b)
+if sys.version_info >= (3, 9):
+	lcm = math.lcm
+else:
+	# from https://stackoverflow.com/a/51716959/7941251
+	def lcm(a: int, b: int) -> int:
+		return abs(a * b) // math.gcd(a, b)
 
 # from https://stackoverflow.com/a/9758173/7941251
 def egcd(a: int, b: int):

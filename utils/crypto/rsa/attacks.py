@@ -75,3 +75,4 @@ def wieners_attack(e: int, n: int):
 		p = pow(c, d, n)
 		if pow(p, e, n) == c:
 			return d
+	raise ValueError(f"Couldn't find d for {e=} and {n=}")

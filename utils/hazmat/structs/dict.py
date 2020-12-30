@@ -68,6 +68,4 @@ PyDictObject._fields_ = [ #pylint: disable=protected-access
 	("ma_keys", ctypes.POINTER(PyDictKeysObject)), ("ma_values", ctypes.POINTER(PyObject_p))
 ]
 
-update_types({
-	dict: PyDictObject
-})
+update_types({dict: PyDictObject})

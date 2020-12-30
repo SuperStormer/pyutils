@@ -108,6 +108,7 @@ class AsmRepl():
 	
 	def run_python(self, code):
 		try:
+			#pylint: disable=eval-used
 			print(
 				eval(
 				code, {
@@ -116,7 +117,7 @@ class AsmRepl():
 				**self.regs
 				}, {}
 				)
-			)  #pylint: disable=eval-used
+			)
 		except Exception:  #pylint: disable=broad-except
 			traceback.print_exc()
 	
