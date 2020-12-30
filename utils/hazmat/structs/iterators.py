@@ -168,7 +168,7 @@ class reversedobject(Struct):
 		return self.seq
 
 #used to find seqiterobject's addr
-class _A():
+class _A():  #pylint: disable=too-few-public-methods
 	def __getitem__(self, val):
 		pass
 
@@ -182,11 +182,11 @@ update_types(
 	type(iter({})): dictiterobject,
 	type(iter(range(0))): rangeiterobject,
 	type(iter(range(2**63))): longrangeiterobject,
-	filter: filterobject,
-	map: mapobject,
-	zip: zipobject,
+	filter: filterobject,  #type: ignore
+	map: mapobject,  #type: ignore
+	zip: zipobject,  #type: ignore
 	enumerate: enumobject,
-	reversed: reversedobject,
+	reversed: reversedobject,  #type: ignore
 	}
 )
 

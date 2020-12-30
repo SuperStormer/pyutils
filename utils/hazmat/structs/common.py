@@ -1,5 +1,6 @@
 import ctypes
 from enum import Enum, Flag
+from typing import NamedTuple, Optional, Type
 
 from utils.hazmat.misc import get_addr
 
@@ -14,10 +15,10 @@ Py_ssize_t = ctypes.c_ssize_t  #pylint: disable=invalid-name
 
 class PyObject(Struct):
 	def get_type(self):
-		return type_dict[get_addr(self.ob_type)][0]
+		return type_dict[get_addr(self.ob_type)].type
 	
 	def get_struct_type(self):
-		return type_dict[get_addr(self.ob_type)][1]
+		return type_dict[get_addr(self.ob_type)].struct
 	
 	def get_real(self):
 		return self.get_struct_type().from_address(ctypes.addressof(self))
@@ -352,20 +353,29 @@ PyTypeObject._fields_ = [ #pylint: disable=protected-access
 	("tp_vectorcall", vectorcallfunc)
 
 ]
-#type handling utils
-type_dict = {id(t): (t, None) for t in object.__subclasses__()}
 
-def update_types(types: dict):
-	type_dict.update({id(t[0]): t for t in types.items()})
+#type handling utils
+# id(type): (type,Struct)
+class TypeLookup(NamedTuple):
+	type: type
+	struct: Optional[Type[Struct]]
+
+type_dict: dict[int, TypeLookup] = {id(t): TypeLookup(t, None) for t in object.__subclasses__()}
+
+def update_types(types: dict[type, Type[Struct]]):
+	"""updates type_dict with dict of {type: Struct}"""
+	type_dict.update({id(t[0]): TypeLookup(*t) for t in types.items()})
 
 update_types({type: PyTypeObject})
 
 def get_struct(val):
+	"""returns a Struct for a python object"""
 	obj = PyObject.from_object(val)
 	try:
 		return obj.get_struct_type().from_object(val)
 	except (KeyError, AttributeError):
 		return obj
+
 #heap type objects
 from .dict import PyDictKeysObject  # pylint: disable=wrong-import-position
 
@@ -381,4 +391,3 @@ class PyHeapTypeObject(Struct):
 Py_None = PyObject.from_address(id(None))
 Py_Ellipsis = PyObject.from_address(id(Ellipsis))
 Py_NotImplemented = PyObject.from_address(id(NotImplemented))
-

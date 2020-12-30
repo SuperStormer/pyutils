@@ -6,3 +6,4 @@ from .dict import *
 from .iterators import *
 from .num import *
 from .str import *
+from .weakref import *
