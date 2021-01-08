@@ -156,7 +156,7 @@ def main():
 		print("Usage: xs128p.py browser num doubles...")
 		exit(1)
 	browser = sys.argv[1]
-	n = sys.argv[2]
+	n = int(sys.argv[2])
 	doubles = list(map(float, sys.argv[3:]))
 	for i in itertools.islice(predict_rands(doubles, browser), 0, n):
 		print(i)
