@@ -30,8 +30,8 @@ def nth_fib(n: int) -> int:
 		return x**2 + y**2
 
 @lru_cache(maxsize=512)
-def nth_fib2(n: int) -> int:
-	""" uses standard algo with lru_cache """
+def nth_fib_rec(n: int) -> int:
+	""" uses standard recursive algorithm """
 	if n == 0:
 		return 0
 	if n == 1:
@@ -40,8 +40,8 @@ def nth_fib2(n: int) -> int:
 
 phi = (1 + 5**0.5) / 2
 
-def nth_fib3(n: int) -> int:
-	""" uses Binet's formula with floats """
+def nth_fib_binet(n: int) -> int:
+	""" uses Binet's formula """
 	return round((phi**n - (1 - phi)**n) / (5**0.5))
 
 def collatz(n):

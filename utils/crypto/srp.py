@@ -54,7 +54,7 @@ async def client_validate(email, password, send, recv):
 
 async def client_zero_key(email, send, recv, A=0):
 	if A % N != 0:
-		raise ValueError("invalid A")
+		raise ValueError(f"invalid A {A}")
 	await send(email)
 	await send(A)
 	salt = await recv()

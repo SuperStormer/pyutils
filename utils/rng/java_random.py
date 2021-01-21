@@ -18,7 +18,7 @@ class JavaRandom():
 			raise ValueError("bound must be positive")
 		
 		if (bound & -bound) == bound:  # i.e., bound is a power of 2
-			return ((bound * self.next(31)) >> 31)
+			return (bound * self.next(31)) >> 31
 		bits = 0
 		val = 0
 		while bits - val + (bound - 1) < 0:

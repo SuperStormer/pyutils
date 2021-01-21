@@ -1,7 +1,7 @@
-from .xor import xor
-from ..bits import lowest_bits
 import random
 import warnings
+
+from utils.bits import lowest_bits
 
 class MersenneTwister:
 	def __init__(self):
