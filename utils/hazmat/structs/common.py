@@ -355,11 +355,11 @@ PyTypeObject._fields_ = [ #pylint: disable=protected-access
 ]
 
 #type handling utils
-# id(type): (type,Struct)
 class TypeLookup(NamedTuple):
 	type: type
 	struct: Optional[Type[Struct]]
 
+# id(type): (type,Struct)
 type_dict: dict[int, TypeLookup] = {id(t): TypeLookup(t, None) for t in object.__subclasses__()}
 
 def update_types(types: dict[type, Type[Struct]]):
