@@ -1,0 +1,5 @@
+#!/usr/bin/env python3
+import sys
+import textwrap
+
+print(textwrap.dedent(sys.stdin.read()))
