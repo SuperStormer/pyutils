@@ -10,7 +10,7 @@ from utils.ctf.pin import pin, INSCOUNT32, INSCOUNT64
 
 def get_args():
 	
-	parser = argparse.ArgumentParser()
+	parser = argparse.ArgumentParser(description="Program for playing with Pin")
 	parser.add_argument(
 		"-d",
 		"--detect",
@@ -68,7 +68,7 @@ def get_args():
 		default=False,
 		help="Pass argument via command-line arguments instead of stdin."
 	)
-	parser.add_argument("filename", type=Path, help="Program for playing with Pin")
+	parser.add_argument("filename", type=Path)
 	
 	if len(sys.argv) < 2:
 		parser.print_help()
