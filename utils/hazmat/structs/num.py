@@ -2,7 +2,7 @@ import ctypes
 from .base import Struct
 from .common import PyObject, PyVarObject, update_types
 
-# https://github.com/python/cpython/blob/master/Include/longintrepr.h
+# https://github.com/python/cpython/blob/master/Include/cpython/longintrepr.h
 class PyLongObject(Struct):
 	SHIFT = 30
 	BASE = 1 << SHIFT
