@@ -25,7 +25,7 @@ class PyDictObject(Struct):
 class PyDictKeyEntry(Struct):
 	_fields_ = [("me_hash", Py_hash_t), ("me_key", PyObject_p), ("me_value", PyObject_p)]
 
-dict_lookup_func = ctypes.CFUNCTYPE(
+dict_lookup_func = ctypes.PYFUNCTYPE(
 	ctypes.c_ssize_t, ctypes.POINTER(PyDictObject), PyObject_p, Py_hash_t,
 	ctypes.POINTER(PyObject_p)
 )
