@@ -9,7 +9,7 @@ class PyLongObject(Struct):
 	SHIFT = (30,15)[digit_size]
 	BASE = 1 << SHIFT
 	MASK = BASE - 1
-	_fields_ = [("ob_base", PyVarObject), ("_ob_digit", [(ctypes.c_uint32, ctypes.c_ushort)[digit_size]])]
+	_fields_ = [("ob_base", PyVarObject), ("_ob_digit", (ctypes.c_uint32, ctypes.c_ushort)[digit_size])]
 	
 	@property
 	def ob_digit(self):
