@@ -73,8 +73,17 @@ class PyTypeObject(Struct):
 		return type_dict[ctypes.addressof(self)][1]
 
 PyTypeObject_p = ctypes.POINTER(PyTypeObject)  #pylint: disable=invalid-name
-PyObject._fields_ = [("ob_refcnt", ctypes.c_ssize_t), ("ob_type", PyTypeObject_p)]  #pylint: disable=protected-access
 PyObject_p = ctypes.POINTER(PyObject)
+# Add the two extra fields to PyObject by relying on _Py_ForgetReference to see if Py_TRACE_REFS is defined
+try:
+	ctypes.pythonapi._Py_ForgetReference #pylint: disable=maybe-no-member
+except AttributeError:
+	PyObject._fields_ = [("ob_refcnt", ctypes.c_ssize_t), ("ob_type", PyTypeObject_p)]  #pylint: disable=protected-access
+else:
+	PyObject._fields_ = [
+		("_ob_next", PyObject_p), ("_ob_prev", PyObject_p),
+		("ob_refcnt", ctypes.c_ssize_t), ("ob_type", PyTypeObject_p)
+	]  #pylint: disable=protected-access
 
 class PyVarObject(Struct):
 	_fields_ = [("ob_base", PyObject), ("ob_size", ctypes.c_ssize_t)]
