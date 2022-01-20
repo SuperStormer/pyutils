@@ -4,7 +4,7 @@ from .common import PyObject, PyVarObject, update_types
 
 # https://github.com/python/cpython/blob/master/Include/cpython/longintrepr.h
 class PyLongObject(Struct):
-	SHIFT = 30
+	SHIFT = [30, 15][PyVarObject.from_object(32768).ob_size]
 	BASE = 1 << SHIFT
 	MASK = BASE - 1
 	_fields_ = [("ob_base", PyVarObject), ("_ob_digit", ctypes.c_uint32)]
