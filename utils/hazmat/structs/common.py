@@ -73,8 +73,17 @@ class PyTypeObject(Struct):
 		return type_dict[ctypes.addressof(self)][1]
 
 PyTypeObject_p = ctypes.POINTER(PyTypeObject)  #pylint: disable=invalid-name
-PyObject._fields_ = [("ob_refcnt", ctypes.c_ssize_t), ("ob_type", PyTypeObject_p)]  #pylint: disable=protected-access
 PyObject_p = ctypes.POINTER(PyObject)
+
+# Add the two extra fields to PyObject by relying on _Py_ForgetReference to see if Py_TRACE_REFS is defined
+# credit to PyCereal_Type
+if hasattr(ctypes.pythonapi, "_Py_ForgetReference"):
+	PyObject._fields_ = [ #pylint: disable=protected-access
+		("_ob_next", PyObject_p), ("_ob_prev", PyObject_p), ("ob_refcnt", ctypes.c_ssize_t),
+		("ob_type", PyTypeObject_p)
+	]
+else:
+	PyObject._fields_ = [("ob_refcnt", ctypes.c_ssize_t), ("ob_type", PyTypeObject_p)]  #pylint: disable=protected-access
 
 class PyVarObject(Struct):
 	_fields_ = [("ob_base", PyObject), ("ob_size", ctypes.c_ssize_t)]
@@ -96,62 +105,64 @@ class Py_buffer(Struct):  #pylint: disable=invalid-name
 	]
 
 # bunch of funcs that the following classes use
-unaryfunc = ctypes.CFUNCTYPE(ctypes.py_object, ctypes.py_object)
-binaryfunc = ctypes.CFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.py_object)
-ternaryfunc = ctypes.CFUNCTYPE(
+unaryfunc = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object)
+binaryfunc = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.py_object)
+ternaryfunc = ctypes.PYFUNCTYPE(
 	ctypes.py_object, ctypes.py_object, ctypes.py_object, ctypes.py_object
 )
-inquiry = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.py_object)
-lenfunc = ctypes.CFUNCTYPE(ctypes.c_ssize_t, ctypes.py_object)
+inquiry = ctypes.PYFUNCTYPE(ctypes.c_int, ctypes.py_object)
+lenfunc = ctypes.PYFUNCTYPE(ctypes.c_ssize_t, ctypes.py_object)
 
-ssizeargfunc = ctypes.CFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.c_ssize_t)
-ssizeobjargproc = ctypes.CFUNCTYPE(
+ssizeargfunc = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.c_ssize_t)
+ssizeobjargproc = ctypes.PYFUNCTYPE(
 	ctypes.c_int, ctypes.py_object, ctypes.c_ssize_t, ctypes.py_object
 )
-objobjargproc = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.py_object, ctypes.py_object)
+objobjargproc = ctypes.PYFUNCTYPE(
+	ctypes.c_int, ctypes.py_object, ctypes.py_object, ctypes.py_object
+)
 
-objobjproc = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.py_object)
-visitproc = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.c_void_p)
-traverseproc = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.py_object, visitproc, ctypes.c_void_p)
+objobjproc = ctypes.PYFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.py_object)
+visitproc = ctypes.PYFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.c_void_p)
+traverseproc = ctypes.PYFUNCTYPE(ctypes.c_int, ctypes.py_object, visitproc, ctypes.c_void_p)
 
-freefunc = ctypes.CFUNCTYPE(None, ctypes.c_void_p)
-destructor = ctypes.CFUNCTYPE(None, ctypes.py_object)
+freefunc = ctypes.PYFUNCTYPE(None, ctypes.c_void_p)
+destructor = ctypes.PYFUNCTYPE(None, ctypes.py_object)
 
-getattrfunc = ctypes.CFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.c_char_p)
-getattrofunc = ctypes.CFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.py_object)
-setattrfunc = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.c_char_p, ctypes.py_object)
-setattrofunc = ctypes.CFUNCTYPE(
+getattrfunc = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.c_char_p)
+getattrofunc = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.py_object)
+setattrfunc = ctypes.PYFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.c_char_p, ctypes.py_object)
+setattrofunc = ctypes.PYFUNCTYPE(
 	ctypes.py_object, ctypes.py_object, ctypes.c_char_p, ctypes.py_object
 )
 
-reprfunc = ctypes.CFUNCTYPE(ctypes.py_object, ctypes.py_object)
-hashfunc = ctypes.CFUNCTYPE(Py_hash_t, ctypes.py_object)
-richcmpfunc = ctypes.CFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.py_object, ctypes.c_int)
+reprfunc = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object)
+hashfunc = ctypes.PYFUNCTYPE(Py_hash_t, ctypes.py_object)
+richcmpfunc = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.py_object, ctypes.c_int)
 
-getiterfunc = ctypes.CFUNCTYPE(ctypes.py_object, ctypes.py_object)
-iternextfunc = ctypes.CFUNCTYPE(ctypes.py_object, ctypes.py_object)
+getiterfunc = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object)
+iternextfunc = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object)
 
-descrgetfunc = ctypes.CFUNCTYPE(
+descrgetfunc = ctypes.PYFUNCTYPE(
 	ctypes.py_object, ctypes.py_object, ctypes.py_object, ctypes.py_object
 )
-descrsetfunc = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.py_object, ctypes.py_object)
+descrsetfunc = ctypes.PYFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.py_object, ctypes.py_object)
 
-initproc = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.py_object, ctypes.py_object)
-newfunc = ctypes.CFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.py_object, ctypes.py_object)
-allocfunc = ctypes.CFUNCTYPE(ctypes.py_object, PyTypeObject_p, ctypes.c_ssize_t)
+initproc = ctypes.PYFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.py_object, ctypes.py_object)
+newfunc = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.py_object, ctypes.py_object)
+allocfunc = ctypes.PYFUNCTYPE(ctypes.py_object, PyTypeObject_p, ctypes.c_ssize_t)
 
 PySendResult = ctypes.c_uint  # actually an enum
-sendfunc = ctypes.CFUNCTYPE(
+sendfunc = ctypes.PYFUNCTYPE(
 	PySendResult, ctypes.py_object, ctypes.py_object, ctypes.POINTER(ctypes.py_object)
 )
-vectorcallfunc = ctypes.CFUNCTYPE(
+vectorcallfunc = ctypes.PYFUNCTYPE(
 	ctypes.py_object, ctypes.py_object, ctypes.POINTER(ctypes.py_object), ctypes.c_size_t,
 	ctypes.py_object
 )
-getbufferproc = ctypes.CFUNCTYPE(
+getbufferproc = ctypes.PYFUNCTYPE(
 	ctypes.c_int, ctypes.py_object, ctypes.POINTER(Py_buffer), ctypes.c_int
 )
-releasebufferproc = ctypes.CFUNCTYPE(None, ctypes.py_object, ctypes.POINTER(Py_buffer))
+releasebufferproc = ctypes.PYFUNCTYPE(None, ctypes.py_object, ctypes.POINTER(Py_buffer))
 
 class PyNumberMethods(Struct):
 	_fields_ = [
@@ -282,8 +293,8 @@ class PyMemberDef(Struct):
 		return PyMemberDef.Flags(self._flags)
 
 # https://github.com/python/cpython/blob/master/Include/descrobject.h
-getter = ctypes.CFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.c_void_p)
-setter = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.py_object, ctypes.c_void_p)
+getter = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.c_void_p)
+setter = ctypes.PYFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.py_object, ctypes.c_void_p)
 
 class PyGetSetDef(Struct):
 	_fields_ = [

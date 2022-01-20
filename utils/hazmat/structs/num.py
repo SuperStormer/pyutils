@@ -3,11 +3,13 @@ from .base import Struct
 from .common import PyObject, PyVarObject, update_types
 
 # https://github.com/python/cpython/blob/master/Include/cpython/longintrepr.h
+# credit to PyCereal_Type for digit size check
+digit_size = PyVarObject.from_object(32768).ob_size - 1
 class PyLongObject(Struct):
-	SHIFT = 30
+	SHIFT = (30,15)[digit_size]
 	BASE = 1 << SHIFT
 	MASK = BASE - 1
-	_fields_ = [("ob_base", PyVarObject), ("_ob_digit", ctypes.c_uint32)]
+	_fields_ = [("ob_base", PyVarObject), ("_ob_digit", [(ctypes.c_uint32, ctypes.c_ushort)[digit_size]])]
 	
 	@property
 	def ob_digit(self):
