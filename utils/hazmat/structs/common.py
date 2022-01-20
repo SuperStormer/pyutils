@@ -80,10 +80,10 @@ try:
 except AttributeError:
 	PyObject._fields_ = [("ob_refcnt", ctypes.c_ssize_t), ("ob_type", PyTypeObject_p)]  #pylint: disable=protected-access
 else:
-	PyObject._fields_ = [
+	PyObject._fields_ = [ #pylint: disable=protected-access
 		("_ob_next", PyObject_p), ("_ob_prev", PyObject_p),
 		("ob_refcnt", ctypes.c_ssize_t), ("ob_type", PyTypeObject_p)
-	]  #pylint: disable=protected-access
+	]
 
 class PyVarObject(Struct):
 	_fields_ = [("ob_base", PyObject), ("ob_size", ctypes.c_ssize_t)]
