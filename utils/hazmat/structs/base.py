@@ -21,10 +21,21 @@ class Struct(ctypes.Structure):
 	def __getattr__(self, name: str):
 		if name != "ob_base":
 			try:
-				return getattr(self.ob_base,name)
+				return getattr(self.ob_base, name)
 			except AttributeError:
 				pass
 		raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+	
+	def __setattr__(self, name: str, value):
+		try:
+			object.__getattribute__(self, name)
+		except AttributeError as e:
+			try:
+				setattr(self.ob_base, name, value)
+			except AttributeError:
+				raise e from None
+		else:
+			object.__setattr__(self, name, value)
 
 class Union(ctypes.Union):
 	def __repr__(self):

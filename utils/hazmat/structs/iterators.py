@@ -101,13 +101,14 @@ class longrangeiterobject(Struct):
 		("_stop", PyObject_p), ("_step", PyObject_p), ("_length", PyObject_p)
 	]
 
-for field in ["index", "start", "stop", "step", "length"]:
+for _field in ["index", "start", "stop", "step", "length"]:
 	
 	@property  #type: ignore
-	def get(self, field=field):  #type: ignore #pylint: disable=redefined-outer-name
+	def get(self, field=_field):  #type: ignore #pylint: disable=redefined-outer-name
 		return ctypes.cast(getattr(self, "_" + field), ctypes.POINTER(PyLongObject))[0]
 	
-	setattr(longrangeiterobject, field, get)
+	setattr(longrangeiterobject, _field, get)
+del _field
 
 # https://github.com/python/cpython/blob/master/Python/bltinmodule.c
 class filterobject(Struct):
