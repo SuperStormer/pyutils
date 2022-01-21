@@ -77,7 +77,7 @@ PyTypeObject_p = ctypes.POINTER(PyTypeObject)  #pylint: disable=invalid-name
 PyObject_p = ctypes.POINTER(PyObject)
 
 # Add the two extra fields to PyObject by relying on _Py_ForgetReference to see if Py_TRACE_REFS is defined
-# credit to PyCereal_Type
+# credit to Crowthebird#1649 (<@!675937585624776717>)
 if hasattr(ctypes.pythonapi, "_Py_ForgetReference"):
 	PyObject._fields_ = [ #pylint: disable=protected-access
 		("_ob_next", PyObject_p), ("_ob_prev", PyObject_p), ("ob_refcnt", ctypes.c_ssize_t),

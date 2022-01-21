@@ -3,7 +3,7 @@ from .base import Struct
 from .common import PyObject, PyVarObject, update_types
 
 # https://github.com/python/cpython/blob/master/Include/cpython/longintrepr.h
-# credit to PyCereal_Type for digit size check
+# credit to Crowthebird#1649 (<@!675937585624776717>) for digit size check
 digit_size = PyVarObject.from_object(32768).ob_size - 1
 class PyLongObject(Struct):
 	SHIFT = (30,15)[digit_size]
