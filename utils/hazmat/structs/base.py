@@ -17,6 +17,10 @@ class Struct(ctypes.Structure):
 	def to_object(self):
 		""" converts struct to python object """
 		return ctypes.cast(ctypes.byref(self), ctypes.py_object).value
+	
+	def __getattr__(self, name: str):
+		if hasattr(self, "ob_base"):
+			return getattr(self.ob_base,name)
 
 class Union(ctypes.Union):
 	def __repr__(self):

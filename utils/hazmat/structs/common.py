@@ -23,6 +23,7 @@ class PyObject(Struct):
 	def get_real(self):
 		return self.get_struct_type().from_address(ctypes.addressof(self))
 
+
 # https://github.com/python/cpython/blob/master/Include/cpython/object.h
 # and https://github.com/python/cpython/blob/master/Include/object.h
 # also based on https://github.com/clarete/forbiddenfruit/blob/master/forbiddenfruit/__init__.py
