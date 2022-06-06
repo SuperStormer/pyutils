@@ -1,9 +1,12 @@
+MULTIPLIER = 0x5DEECE66D
+ADDEND = 0xB
+
 class JavaRandom():
 	def __init__(self, seed):
 		self.seed = seed
 	
 	def next(self, bits=32):
-		self.seed = (self.seed * 0x5DEECE66D + 0xB) & ((1 << 48) - 1)
+		self.seed = (self.seed * MULTIPLIER + ADDEND) & ((1 << 48) - 1)
 		res = self.seed >> (48 - bits)
 		#deal with java's signed ints
 		if res > (1 << 31 - 1):
@@ -44,8 +47,20 @@ def find_seed(x, y):
 		y += 1 << 32
 	for i in range(1 << 16):
 		seed = (x << 16) + i
-		if ((seed * 0x5DEECE66D + 0xB) & ((1 << 48) - 1)) >> 16 == y:
+		if ((seed * MULTIPLIER + ADDEND) & ((1 << 48) - 1)) >> 16 == y:
 			return seed
+
+# https://jazzy.id.au/2010/09/21/cracking_random_number_generators_part_2.html
+def prev_seed(seed):
+	""" find the previous seed given the current seed """
+	result = 0
+	for i in range(48):
+		mask = 1 << i
+		bit = seed & mask
+		result |= bit
+		if bit == mask:
+			seed -= MULTIPLIER << i
+	return result
 
 def copy_random(x, y):
 	""" from 2 randInt calls """
