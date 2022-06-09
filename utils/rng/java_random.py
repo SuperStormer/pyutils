@@ -9,7 +9,7 @@ class JavaRandom():
 		self.seed = (self.seed * MULTIPLIER + ADDEND) & ((1 << 48) - 1)
 		res = self.seed >> (48 - bits)
 		#deal with java's signed ints
-		if res > (1 << 31 - 1):
+		if res & (1 << 31):
 			return -(1 << 32) + res
 		else:
 			return res
@@ -39,7 +39,7 @@ class JavaRandom():
 		return ((self.next(26) << 27) + self.next(27)) / (1 << 53)
 
 def find_seed(x, y):
-	""" from 2 randInt calls """
+	""" find seed based on two next(32) calls """
 	#deal with Java signed ints
 	if x < 0:
 		x += 1 << 32
@@ -50,17 +50,21 @@ def find_seed(x, y):
 		if ((seed * MULTIPLIER + ADDEND) & ((1 << 48) - 1)) >> 16 == y:
 			return seed
 
-# https://jazzy.id.au/2010/09/21/cracking_random_number_generators_part_2.html
+# https://stackoverflow.com/q/32324404
+def find_seed_long(l):
+	""" find seed based on one nextLong() call """
+	if l < 0:
+		l += 1 << 64
+	x = l >> 32
+	y = l & 0xFFFFFFFF
+	return find_seed(x, y)
+
+# https://stackoverflow.com/q/32324404
 def prev_seed(seed):
 	""" find the previous seed given the current seed """
-	result = 0
-	for i in range(48):
-		mask = 1 << i
-		bit = seed & mask
-		result |= bit
-		if bit == mask:
-			seed -= MULTIPLIER << i
-	return result
+	inv_multiplier = 0xDFE05BCB1365
+	mask = 0xFFFFFFFFFFFF
+	return ((seed - ADDEND) * inv_multiplier) & mask
 
 def copy_random(x, y):
 	""" from 2 randInt calls """
