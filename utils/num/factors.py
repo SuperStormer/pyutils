@@ -19,11 +19,12 @@ def prime_factors(n: int):
 		yield n
 
 def is_prime(n: int) -> bool:
-	if n == 2:
+	"""trial division with 6k +-1 optimization"""
+	if n == 2 or n == 3:
 		return True
-	if n < 2 or n % 2 == 0:
+	if n < 2 or n % 2 == 0 or n % 3 == 0:
 		return False
-	return not any(n % i == 0 for i in range(3, math.isqrt(n) + 1, 2))
+	return not any(n % i == 0 or n % (i + 2) == 0 for i in range(5, math.isqrt(n) + 1, 6))
 
 def is_probable_prime(n: int, k: int = 5) -> bool:
 	"""Miller-Rabin test"""
@@ -72,12 +73,13 @@ def proper_divisors(n: int):
 	if n == 0 or n == 1:
 		return
 	yield 1
-	for i in range(2, math.ceil(math.sqrt(n))):
+	square_root = math.isqrt(n)
+	for i in range(2, square_root):
 		if n % i == 0:
 			yield i
 			yield n // i
-	if math.floor(math.sqrt(n)) == math.sqrt(n):
-		yield int(math.sqrt(n))
+	if pow(square_root, 2) == n:
+		yield square_root
 
 def factors(n: int):
 	yield from proper_divisors(n)
