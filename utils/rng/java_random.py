@@ -38,6 +38,7 @@ class JavaRandom():
 	def next_double(self):
 		return ((self.next(26) << 27) + self.next(27)) / (1 << 53)
 
+# https://github.com/fta2012/ReplicatedRandom/blob/master/ReplicatedRandom.java#L32
 def find_seed(x, y):
 	""" find seed based on two next(32) calls """
 	#deal with Java signed ints
@@ -45,18 +46,22 @@ def find_seed(x, y):
 		x += 1 << 32
 	if y < 0:
 		y += 1 << 32
-	for i in range(1 << 16):
-		seed = (x << 16) + i
-		if ((seed * MULTIPLIER + ADDEND) & ((1 << 48) - 1)) >> 16 == y:
-			return seed
+	
+	mask = (1 << 48) - 1
+	upper_m_of_48_mask = ((1 << 32) - 1) << (48 - 32)
+	old_seed_upper_n = (x << (48 - 32)) & mask
+	new_seed_upper_m = (y << (48 - 32)) & mask
+	
+	for old_seed in range(old_seed_upper_n, (old_seed_upper_n | ((1 << (48 - 32)) - 1)) + 1):
+		new_seed = (old_seed * MULTIPLIER + ADDEND) & mask
+		if (new_seed & upper_m_of_48_mask) == new_seed_upper_m:
+			return new_seed
 
 # https://stackoverflow.com/q/32324404
 def find_seed_long(l):
 	""" find seed based on one nextLong() call """
-	if l < 0:
-		l += 1 << 64
-	x = l >> 32
 	y = l & 0xFFFFFFFF
+	x = (l - y) >> 32
 	return find_seed(x, y)
 
 # https://stackoverflow.com/q/32324404
@@ -70,5 +75,4 @@ def copy_random(x, y):
 	""" from 2 randInt calls """
 	seed = find_seed(x, y)
 	rand = JavaRandom(seed)
-	rand.next()  # this will be y so we discard it
 	return rand
