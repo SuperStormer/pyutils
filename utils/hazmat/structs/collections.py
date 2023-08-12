@@ -58,11 +58,12 @@ class rangeobject(Struct):  #pylint: disable=invalid-name
 for _field in ["start", "stop", "step", "length"]:
 	
 	@property  #type: ignore
-	def get(self, field=_field):  #type: ignore #pylint: disable=redefined-outer-name
+	def _get(self, field=_field):  #type: ignore #pylint: disable=redefined-outer-name
 		return ctypes.cast(getattr(self, "_" + field), ctypes.POINTER(PyLongObject))[0]
 	
-	setattr(rangeobject, _field, get)
+	setattr(rangeobject, _field, _get)
 del _field
+del _get
 
 update_types(
 	{
