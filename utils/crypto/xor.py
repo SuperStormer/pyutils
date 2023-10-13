@@ -13,7 +13,7 @@ def xor(s, t) -> bytes:
 	return bytes(a ^ b for a, b in zip(s, t))
 
 def one_byte_xor_all(s: bytes):
-	return (XorResult(xor(s, itertools.repeat(c)), bytes(c)) for c in range(256))
+	return (XorResult(xor(s, itertools.repeat(c)), bytes([c])) for c in range(256))
 
 def decrypt_one_byte_xor(s: bytes) -> XorResult:
 	return max(
