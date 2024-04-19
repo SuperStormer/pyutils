@@ -1,4 +1,5 @@
 """Number Theory functions"""
+
 import math
 import sys
 
@@ -9,6 +10,7 @@ else:
 	def lcm(a: int, b: int) -> int:
 		return abs(a * b) // math.gcd(a, b)
 
+
 # from https://stackoverflow.com/a/9758173/7941251
 def egcd(a: int, b: int):
 	if a == 0:
@@ -17,14 +19,16 @@ def egcd(a: int, b: int):
 		g, y, x = egcd(b % a, a)
 		return (g, x - (b // a) * y, y)
 
+
 def modinv(a: int, m: int) -> int:
 	return pow(a, -1, m)
 
+
 # var names from https://crypto.stanford.edu/pbc/notes/numbertheory/crt.html
-def crt(a_s, moduli) -> int:
-	""" Chinese Remainder Theorem"""
+def crt(a_s: list[int], moduli: list[int]) -> int:
+	"""Chinese Remainder Theorem"""
 	x = 0
-	M = math.prod(moduli)
+	M = math.prod(moduli)  # noqa: N806
 	for a, m in zip(a_s, moduli):
 		b = M // m
 		b_prime = modinv(b, m)

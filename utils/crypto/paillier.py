@@ -1,12 +1,15 @@
-""" https://en.wikipedia.org/wiki/Paillier_cryptosystem """
+"""https://en.wikipedia.org/wiki/Paillier_cryptosystem"""
+
 import math
 import secrets
 
-from .misc import long_to_bytes, bytes_to_long
 from ..num.ntheory import lcm
+from .misc import bytes_to_long, long_to_bytes
 
-def L(x, n):
+
+def L(x, n):  # noqa: N802
 	return (x - 1) // n
+
 
 def private_key(p, q, g):
 	n = p * q
@@ -14,8 +17,10 @@ def private_key(p, q, g):
 	mu = pow(L(pow(g, lamb, n**2), n), -1, n)
 	return (lamb, mu)
 
+
 def decrypt(c, n, lamb, mu):
 	return (L(pow(c, lamb, n**2), n) * mu) % n
+
 
 def encrypt(m, n, g):
 	r = -1
@@ -23,8 +28,10 @@ def encrypt(m, n, g):
 		r = secrets.randbelow(n)
 	return (pow(g, m, n**2) * pow(r, n, n**2)) % n**2
 
+
 def decrypt_to_str(c, n, lamb, mu):
 	return long_to_bytes(decrypt(c, n, lamb, mu))
+
 
 def encrypt_str(m, n, g):
 	return encrypt(bytes_to_long(m), n, g)

@@ -1,11 +1,13 @@
 import itertools
 from functools import lru_cache
 
+
 def triangular_nums():
 	n = 0
 	for i in itertools.count(1):
 		n += i
 		yield n
+
 
 def fib():
 	yield 1
@@ -15,9 +17,10 @@ def fib():
 		a, b = b, a + b
 		yield a
 
+
 @lru_cache(maxsize=512)
 def nth_fib(n: int) -> int:
-	""" uses fast doubling(see https://www.nayuki.io/page/fast-fibonacci-algorithms) """
+	"""uses fast doubling(see https://www.nayuki.io/page/fast-fibonacci-algorithms)"""
 	if n == 0:
 		return 0
 	elif n == 1 or n == 2:
@@ -29,20 +32,24 @@ def nth_fib(n: int) -> int:
 	else:
 		return x**2 + y**2
 
+
 @lru_cache(maxsize=512)
 def nth_fib_rec(n: int) -> int:
-	""" uses standard recursive algorithm """
+	"""uses standard recursive algorithm"""
 	if n == 0:
 		return 0
 	if n == 1:
 		return 1
 	return nth_fib(n - 1) + nth_fib(n - 2)
 
+
 phi = (1 + 5**0.5) / 2
 
+
 def nth_fib_binet(n: int) -> int:
-	""" uses Binet's formula """
-	return round((phi**n - (1 - phi)**n) / (5**0.5))
+	"""uses Binet's formula"""
+	return round((phi**n - (1 - phi) ** n) / (5**0.5))
+
 
 def collatz(n):
 	while n != 1:

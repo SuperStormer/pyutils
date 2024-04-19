@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 # adapted from https://github.com/TACIXAT/XorShift128Plus
-import struct
 import random
-from z3 import Solver, Implies, Bool, Or, BitVecs, LShR, sat
+import struct
+
+from z3 import BitVecs, Bool, Implies, LShR, Or, Solver, sat
 
 MASK = 0xFFFFFFFFFFFFFFFF
+
 
 # xor_shift_128_plus algorithm
 def xs128p(state0, state1, browser):
@@ -20,14 +22,15 @@ def xs128p(state0, state1, browser):
 		generated = state0 & MASK
 	else:
 		generated = (state0 + state1) & MASK
-	
+
 	return state0, state1, generated
+
 
 # Symbolic execution of xs128p
 def sym_xs128p(slvr, sym_state0, sym_state1, generated, browser):
 	s1 = sym_state0
 	s0 = sym_state1
-	s1 ^= (s1 << 23)
+	s1 ^= s1 << 23
 	s1 ^= LShR(s1, 17)
 	s1 ^= s0
 	s1 ^= LShR(s0, 26)
@@ -36,8 +39,8 @@ def sym_xs128p(slvr, sym_state0, sym_state1, generated, browser):
 	if browser == "chrome":
 		calc = sym_state0
 	else:
-		calc = (sym_state0 + sym_state1)
-	
+		calc = sym_state0 + sym_state1
+
 	condition = Bool("c%d" % int(generated * random.random()))
 	if browser == "chrome":
 		impl = Implies(condition, LShR(calc, 12) == int(generated))
@@ -49,11 +52,14 @@ def sym_xs128p(slvr, sym_state0, sym_state1, generated, browser):
 	slvr.add(impl)
 	return sym_state0, sym_state1, [condition]
 
+
 def reverse17(val):
 	return val ^ (val >> 17) ^ (val >> 34) ^ (val >> 51)
 
+
 def reverse23(val):
 	return (val ^ (val << 23) ^ (val << 46)) & MASK
+
 
 def xs128p_backward(state0, state1, browser):
 	prev_state1 = state0
@@ -68,6 +74,7 @@ def xs128p_backward(state0, state1, browser):
 	else:
 		generated = (prev_state0 + prev_state1) & MASK
 	return prev_state0, prev_state1, generated
+
 
 # Firefox nextDouble():
 # (rand_uint64 & ((1 << 53) - 1)) / (1 << 53)
@@ -86,6 +93,7 @@ def to_double(out, browser):
 	else:
 		raise ValueError(f"invalid browser {browser}")
 
+
 def from_double(double, browser):
 	if browser == "chrome":
 		return struct.unpack("<Q", struct.pack("d", double + 1))[0] & (MASK >> 12)
@@ -96,24 +104,25 @@ def from_double(double, browser):
 	else:
 		raise ValueError(f"invalid browser {browser}")
 
+
 def get_state(doubles, browser):
 	if browser == "node":
 		browser = "chrome"
-	elif browser not in ("chrome", "firefox", "safari"):
+	elif browser not in {"chrome", "firefox", "safari"}:
 		raise ValueError(f"invalid browser {browser}")
 	if browser == "chrome":
 		doubles = doubles[::-1]
-	
+
 	# from the doubles, generate known piece of the original uint64
 	generated = [from_double(double, browser) for double in doubles]
-	
+
 	# setup symbolic state for xorshift128+
 	ostate0, ostate1 = BitVecs("ostate0 ostate1", 64)
 	sym_state0 = ostate0
 	sym_state1 = ostate1
 	solver = Solver()
 	conditions = []
-	
+
 	# run symbolic xorshift128+ algorithm for three iterations
 	# using the recovered numbers as constraints
 	for val in generated:
@@ -133,10 +142,11 @@ def get_state(doubles, browser):
 	else:
 		raise ValueError("unsat model")
 
+
 def predict_rands(doubles, browser):
 	if browser == "node":
 		browser = "chrome"
-	elif browser not in ("chrome", "firefox", "safari"):
+	elif browser not in {"chrome", "firefox", "safari"}:
 		raise ValueError(f"invalid browser {browser}")
 	state0, state1 = get_state(doubles, browser)
 	# generate random numbers from recovered state
@@ -146,20 +156,23 @@ def predict_rands(doubles, browser):
 			out = state0 & MASK
 		else:
 			state0, state1, out = xs128p(state0, state1, browser)
-		
+
 		yield to_double(out, browser)
 
+
 def main():
-	import sys
-	import itertools
+	import itertools  # noqa: PLC0415
+	import sys  # noqa: PLC0415
+
 	if len(sys.argv) < 4:
 		print("Usage: xs128p.py browser num doubles...")
-		exit(1)
+		sys.exit(1)
 	browser = sys.argv[1]
 	n = int(sys.argv[2])
 	doubles = list(map(float, sys.argv[3:]))
 	for i in itertools.islice(predict_rands(doubles, browser), 0, n):
 		print(i)
+
 
 if __name__ == "__main__":
 	main()

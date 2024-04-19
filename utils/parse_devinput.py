@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#based on https://ctftime.org/writeup/21148
+# based on https://ctftime.org/writeup/21148
 import string
 import struct
 
@@ -14,14 +14,16 @@ EVENT_SIZE = struct.calcsize(FORMAT)
 
 # keyboard layouts are dicts that map keynames to (normal,shift,alt gr) chars
 keyboard_layout_qwerty = {
-	**dict(zip(string.ascii_uppercase, zip(string.ascii_lowercase, string.ascii_uppercase))),
+	**dict(
+		zip(string.ascii_uppercase, zip(string.ascii_lowercase, string.ascii_uppercase))
+	),
 	**dict(zip(string.digits, zip(string.digits, ")!@#$%^&*("))),
 	"MINUS": ("-", "_"),
 	"EQUAL": ("=", "+"),
 	"LEFTBRACE": ("{", "["),
 	"RIGHTBRACE": ("}", "]"),
 	"SEMICOLON": (";", ":"),
-	"APOSTROPHE": ("'", "\""),
+	"APOSTROPHE": ("'", '"'),
 	"GRAVE": ("`", "~"),
 	"BACKSLASH": ("\\", "|"),
 	"COMMA": (",", "<"),
@@ -29,7 +31,9 @@ keyboard_layout_qwerty = {
 	"SLASH": ("/", "?"),
 }
 keyboard_layout_azerty = {
-	**dict(zip(string.ascii_uppercase, zip(string.ascii_lowercase, string.ascii_uppercase))),
+	**dict(
+		zip(string.ascii_uppercase, zip(string.ascii_lowercase, string.ascii_uppercase))
+	),
 	**dict(zip(string.digits, zip("à&é\"'(-è_ç", string.digits, "@ ~#{[|`\\^"))),
 	"Q": ("a", "A"),
 	"W": ("z", "Z"),
@@ -49,25 +53,33 @@ keyboard_layout_azerty = {
 	"COMMA": (";", "."),
 	"DOT": (":", "/"),
 	"SLASH": ("!", "§"),
-	"102ND": ("<", ">")
+	"102ND": ("<", ">"),
 }
-num_pad_map = {"ENTER": "\n", "SLASH": "\\", "ASTERISK": "*", "MINUS": "-", "PLUS": "+", "DOT": "."}
+num_pad_map = {
+	"ENTER": "\n",
+	"SLASH": "\\",
+	"ASTERISK": "*",
+	"MINUS": "-",
+	"PLUS": "+",
+	"DOT": ".",
+}
+
 
 def parse_devinput(in_file, keyboard_layout=None):
 	if keyboard_layout is None:
 		keyboard_layout = keyboard_layout_qwerty
 	out = []
 	mode = 0
-	for event in iter(lambda: in_file.read(EVENT_SIZE), b""):
-		(tv_sec, tv_usec, type_, code, value) = struct.unpack(FORMAT, event)  #pylint: disable=unused-variable
-		
+	for event in iter(lambda: in_file.read(EVENT_SIZE), b""):  # noqa: PLR1702
+		(tv_sec, tv_usec, type_, code, value) = struct.unpack(FORMAT, event)  # noqa: F841
+
 		if type_ != 0 or code != 0 or value != 0:
 			# print(f"{tv_sec}.{tv_usec}, {type}, {code}, {value}, {value:08b}")
-			
+
 			if type_ == 0x01:  # EV_KEY
 				key = key_codes[code][4:]
-				if value == 1:  #press key
-					if mode == 0:  #normal
+				if value == 1:  # press key
+					if mode == 0:  # normal
 						if key in keyboard_layout:
 							out.append(keyboard_layout[key][0])
 						elif key == "SPACE":
@@ -78,7 +90,7 @@ def parse_devinput(in_file, keyboard_layout=None):
 							out.append("\n")
 						elif key == "BACKSPACE":
 							out.append("\b")
-						elif key.startswith("KP"):  #num pad
+						elif key.startswith("KP"):  # num pad
 							key = key[2:]
 							if key[2:] in string.digits:
 								out.append(key)
@@ -92,12 +104,12 @@ def parse_devinput(in_file, keyboard_layout=None):
 							mode = 2
 						else:
 							out.append(key)
-					elif mode == 1:  #shift
+					elif mode == 1:  # shift
 						if key in keyboard_layout:
 							out.append(keyboard_layout[key][1])
 						else:
 							out.append("SHIFT" + key)
-					elif mode == 2:  #alt gr
+					elif mode == 2:  # alt gr
 						if key in keyboard_layout and len(keyboard_layout[key]) > 2:
 							out.append(keyboard_layout[key][2])
 						else:
@@ -107,9 +119,10 @@ def parse_devinput(in_file, keyboard_layout=None):
 						mode = 0
 	return "".join(out)
 
+
 def main():
-	#pylint: disable=import-outside-toplevel
-	import argparse
+	import argparse  # noqa: PLC0415
+
 	parser = argparse.ArgumentParser()
 	parser.add_argument("file", type=argparse.FileType("rb"))
 	parser.add_argument("output", type=argparse.FileType("w"), nargs="?", default="-")
@@ -122,6 +135,7 @@ def main():
 	else:
 		raise ValueError("Invalid layout - this should be impossible")
 	print(parse_devinput(args.file, layout), file=args.output)
+
 
 if __name__ == "__main__":
 	main()

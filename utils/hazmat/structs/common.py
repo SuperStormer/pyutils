@@ -6,22 +6,24 @@ from utils.hazmat.misc import get_addr
 
 from .base import Struct
 
-Py_hash_t = ctypes.c_ssize_t  #pylint: disable=invalid-name
-Py_ssize_t = ctypes.c_ssize_t  #pylint: disable=invalid-name
+Py_hash_t = ctypes.c_ssize_t  # pylint: disable=invalid-name
+Py_ssize_t = ctypes.c_ssize_t  # pylint: disable=invalid-name
 
 # https://github.com/python/cpython/blob/master/Include/object.h
-#define PyObject_HEAD          PyObject ob_base;
-#define PyObject_VAR_HEAD      PyVarObject ob_base;
+# define PyObject_HEAD          PyObject ob_base;
+# define PyObject_VAR_HEAD      PyVarObject ob_base;
+
 
 class PyObject(Struct):
 	def get_type(self):
 		return type_dict[get_addr(self.ob_type)].type
-	
+
 	def get_struct_type(self):
 		return type_dict[get_addr(self.ob_type)].struct
-	
+
 	def get_real(self):
 		return self.get_struct_type().from_address(ctypes.addressof(self))
+
 
 # https://github.com/python/cpython/blob/master/Include/cpython/object.h
 # and https://github.com/python/cpython/blob/master/Include/object.h
@@ -59,40 +61,45 @@ class PyTypeObject(Struct):
 		DICT_SUBCLASS = 1 << 29
 		BASE_EXC_SUBCLASS = 1 << 30
 		TYPE_SUBCLASS = 1 << 31
-		
+
 		DEFAULT = HAVE_VERSION_TAG
-	
+
 	@property
 	def tp_flags(self):
 		return PyTypeObject.Flags(self._tp_flags)
-	
+
 	def get_type(self):
 		return type_dict[ctypes.addressof(self)][0]
-	
+
 	def get_struct_type(self):
 		return type_dict[ctypes.addressof(self)][1]
 
-PyTypeObject_p = ctypes.POINTER(PyTypeObject)  #pylint: disable=invalid-name
+
+PyTypeObject_p = ctypes.POINTER(PyTypeObject)
 PyObject_p = ctypes.POINTER(PyObject)
 
 # Add the two extra fields to PyObject by relying on _Py_ForgetReference to see if Py_TRACE_REFS is defined
 # credit to Crowthebird#1649 (<@!675937585624776717>)
 if hasattr(ctypes.pythonapi, "_Py_ForgetReference"):
-	PyObject._fields_ = [ #pylint: disable=protected-access
-		("_ob_next", PyObject_p), ("_ob_prev", PyObject_p), ("ob_refcnt", ctypes.c_ssize_t),
-		("ob_type", PyTypeObject_p)
+	PyObject._fields_ = [  # noqa: SLF001
+		("_ob_next", PyObject_p),
+		("_ob_prev", PyObject_p),
+		("ob_refcnt", ctypes.c_ssize_t),
+		("ob_type", PyTypeObject_p),
 	]
 else:
-	PyObject._fields_ = [("ob_refcnt", ctypes.c_ssize_t), ("ob_type", PyTypeObject_p)]  #pylint: disable=protected-access
+	PyObject._fields_ = [("ob_refcnt", ctypes.c_ssize_t), ("ob_type", PyTypeObject_p)]  # noqa: SLF001
+
 
 class PyVarObject(Struct):
 	_fields_ = [("ob_base", PyObject), ("ob_size", ctypes.c_ssize_t)]
 
-#This is here due to codependencies and I don"t want to trigger some weird error
-class Py_buffer(Struct):  #pylint: disable=invalid-name
+
+# This is here due to codependencies and I don"t want to trigger some weird error
+class Py_buffer(Struct):  # noqa: N801
 	_fields_ = [
 		("buf", ctypes.c_void_p),
-		("obj", PyObject_p),  #owned ref
+		("obj", PyObject_p),  # owned ref
 		("len", ctypes.c_ssize_t),
 		("itemsize", ctypes.c_ssize_t),
 		("readonly", ctypes.c_int),
@@ -101,8 +108,9 @@ class Py_buffer(Struct):  #pylint: disable=invalid-name
 		("shape", ctypes.POINTER(ctypes.c_ssize_t)),
 		("strides", ctypes.POINTER(ctypes.c_ssize_t)),
 		("suboffsets", ctypes.POINTER(ctypes.c_ssize_t)),
-		("internal", ctypes.c_void_p)
+		("internal", ctypes.c_void_p),
 	]
+
 
 # bunch of funcs that the following classes use
 unaryfunc = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object)
@@ -123,21 +131,27 @@ objobjargproc = ctypes.PYFUNCTYPE(
 
 objobjproc = ctypes.PYFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.py_object)
 visitproc = ctypes.PYFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.c_void_p)
-traverseproc = ctypes.PYFUNCTYPE(ctypes.c_int, ctypes.py_object, visitproc, ctypes.c_void_p)
+traverseproc = ctypes.PYFUNCTYPE(
+	ctypes.c_int, ctypes.py_object, visitproc, ctypes.c_void_p
+)
 
 freefunc = ctypes.PYFUNCTYPE(None, ctypes.c_void_p)
 destructor = ctypes.PYFUNCTYPE(None, ctypes.py_object)
 
 getattrfunc = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.c_char_p)
 getattrofunc = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.py_object)
-setattrfunc = ctypes.PYFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.c_char_p, ctypes.py_object)
+setattrfunc = ctypes.PYFUNCTYPE(
+	ctypes.c_int, ctypes.py_object, ctypes.c_char_p, ctypes.py_object
+)
 setattrofunc = ctypes.PYFUNCTYPE(
 	ctypes.py_object, ctypes.py_object, ctypes.c_char_p, ctypes.py_object
 )
 
 reprfunc = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object)
 hashfunc = ctypes.PYFUNCTYPE(Py_hash_t, ctypes.py_object)
-richcmpfunc = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.py_object, ctypes.c_int)
+richcmpfunc = ctypes.PYFUNCTYPE(
+	ctypes.py_object, ctypes.py_object, ctypes.py_object, ctypes.c_int
+)
 
 getiterfunc = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object)
 iternextfunc = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object)
@@ -145,10 +159,16 @@ iternextfunc = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object)
 descrgetfunc = ctypes.PYFUNCTYPE(
 	ctypes.py_object, ctypes.py_object, ctypes.py_object, ctypes.py_object
 )
-descrsetfunc = ctypes.PYFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.py_object, ctypes.py_object)
+descrsetfunc = ctypes.PYFUNCTYPE(
+	ctypes.c_int, ctypes.py_object, ctypes.py_object, ctypes.py_object
+)
 
-initproc = ctypes.PYFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.py_object, ctypes.py_object)
-newfunc = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.py_object, ctypes.py_object)
+initproc = ctypes.PYFUNCTYPE(
+	ctypes.c_int, ctypes.py_object, ctypes.py_object, ctypes.py_object
+)
+newfunc = ctypes.PYFUNCTYPE(
+	ctypes.py_object, ctypes.py_object, ctypes.py_object, ctypes.py_object
+)
 allocfunc = ctypes.PYFUNCTYPE(ctypes.py_object, PyTypeObject_p, ctypes.c_ssize_t)
 
 PySendResult = ctypes.c_uint  # actually an enum
@@ -156,13 +176,17 @@ sendfunc = ctypes.PYFUNCTYPE(
 	PySendResult, ctypes.py_object, ctypes.py_object, ctypes.POINTER(ctypes.py_object)
 )
 vectorcallfunc = ctypes.PYFUNCTYPE(
-	ctypes.py_object, ctypes.py_object, ctypes.POINTER(ctypes.py_object), ctypes.c_size_t,
-	ctypes.py_object
+	ctypes.py_object,
+	ctypes.py_object,
+	ctypes.POINTER(ctypes.py_object),
+	ctypes.c_size_t,
+	ctypes.py_object,
 )
 getbufferproc = ctypes.PYFUNCTYPE(
 	ctypes.c_int, ctypes.py_object, ctypes.POINTER(Py_buffer), ctypes.c_int
 )
 releasebufferproc = ctypes.PYFUNCTYPE(None, ctypes.py_object, ctypes.POINTER(Py_buffer))
+
 
 class PyNumberMethods(Struct):
 	_fields_ = [
@@ -184,7 +208,7 @@ class PyNumberMethods(Struct):
 		("nb_xor", binaryfunc),
 		("nb_or", binaryfunc),
 		("nb_int", unaryfunc),
-		("nb_reserved", ctypes.c_void_p),  # used to be nb_long 
+		("nb_reserved", ctypes.c_void_p),  # used to be nb_long
 		("nb_float", unaryfunc),
 		# inplace ops
 		("nb_inplace_add", binaryfunc),
@@ -209,6 +233,7 @@ class PyNumberMethods(Struct):
 		("nb_inplace_matrix_multiply", binaryfunc),
 	]
 
+
 class PySequenceMethods(Struct):
 	_fields_ = [
 		("sq_length", lenfunc),
@@ -223,23 +248,32 @@ class PySequenceMethods(Struct):
 		("sq_inplace_repeat", ssizeargfunc),
 	]
 
+
 class PyMappingMethods(Struct):
 	_fields_ = [
-		("mp_length", lenfunc), ("mp_subscript", binaryfunc), ("mp_ass_subscript", objobjproc)
+		("mp_length", lenfunc),
+		("mp_subscript", binaryfunc),
+		("mp_ass_subscript", objobjproc),
 	]
+
 
 class PyAsyncMethods(Struct):
 	_fields_ = [
-		("am_await", unaryfunc), ("am_aiter", unaryfunc), ("am_anext", unaryfunc),
-		("am_send", sendfunc)
+		("am_await", unaryfunc),
+		("am_aiter", unaryfunc),
+		("am_anext", unaryfunc),
+		("am_send", sendfunc),
 	]
+
 
 class PyBufferProcs(Struct):
 	_fields_ = [("bf_getbuffer", getbufferproc), ("bf_releasebuffer", releasebufferproc)]
 
+
 # https://github.com/python/cpython/blob/master/Include/methodobject.h
 class PyMethodDef(Struct):
 	_fields_ = [("ml_name", ctypes.c_char_p), ("ml_doc", ctypes.c_char_p)]
+
 
 # https://github.com/python/cpython/blob/master/Include/structmember.h
 class PyMemberDef(Struct):
@@ -258,52 +292,63 @@ class PyMemberDef(Struct):
 		USHORT = 10
 		UINT = 11
 		ULONG = 12
-		
+
 		# strings contained in the structure
 		STRING_INPLACE = 13
-		
-		#bools contained in the structure (assumed char)
+
+		# bools contained in the structure (assumed char)
 		BOOL = 14
 		# ike T_OBJECT, but raises AttributeError
 		# when the value is NULL, instead of converting to None.
 		OBJECT_EX = 16
 		LONGLONG = 17
 		ULONGLONG = 18
-		
+
 		PYSSIZET = 19
 		NONE = 20
-	
+
 	class Flags(Flag):
 		READONLY = 1
 		READ_RESTRICTED = 2
 		PY_WRITE_RESTRICTED = 4
-		RESTRICTED = (READ_RESTRICTED | PY_WRITE_RESTRICTED)
-	
+		RESTRICTED = READ_RESTRICTED | PY_WRITE_RESTRICTED
+
 	_fields_ = [
-		("name", ctypes.c_char_p), ("_type", ctypes.c_int), ("offset", ctypes.c_ssize_t),
-		("_flags", ctypes.c_int), ("doc", ctypes.c_char_p)
+		("name", ctypes.c_char_p),
+		("_type", ctypes.c_int),
+		("offset", ctypes.c_ssize_t),
+		("_flags", ctypes.c_int),
+		("doc", ctypes.c_char_p),
 	]
-	
+
 	@property
 	def type(self):
 		return PyMemberDef.Type(self._type)
-	
+
 	@property
 	def flags(self):
 		return PyMemberDef.Flags(self._flags)
 
+
 # https://github.com/python/cpython/blob/master/Include/descrobject.h
 getter = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.c_void_p)
-setter = ctypes.PYFUNCTYPE(ctypes.c_int, ctypes.py_object, ctypes.py_object, ctypes.c_void_p)
+setter = ctypes.PYFUNCTYPE(
+	ctypes.c_int, ctypes.py_object, ctypes.py_object, ctypes.c_void_p
+)
+
 
 class PyGetSetDef(Struct):
 	_fields_ = [
-		("name", ctypes.c_char_p), ("get", getter), ("set", setter), ("doc", ctypes.c_char_p),
-		("closure", ctypes.c_void_p)
+		("name", ctypes.c_char_p),
+		("get", getter),
+		("set", setter),
+		("doc", ctypes.c_char_p),
+		("closure", ctypes.c_void_p),
 	]
 
-#type object fields
-PyTypeObject._fields_ = [ #pylint: disable=protected-access
+
+# type object fields
+PyTypeObject._fields_ = [  # noqa: SLF001
 	("ob_base", PyVarObject),
 	("tp_name", ctypes.c_char_p),
 	# for allocation
@@ -330,7 +375,7 @@ PyTypeObject._fields_ = [ #pylint: disable=protected-access
 	("tp_as_buffer", ctypes.POINTER(PyBufferProcs)),
 	# feature flags
 	("_tp_flags", ctypes.c_ulong),
-	#docstring
+	# docstring
 	("tp_doc", ctypes.c_char_p),
 	# misc
 	("tp_traverse", traverseproc),
@@ -361,23 +406,29 @@ PyTypeObject._fields_ = [ #pylint: disable=protected-access
 	("tp_del", destructor),
 	("tp_version_tag", ctypes.c_uint),
 	("tp_finalize", destructor),
-	("tp_vectorcall", vectorcallfunc)
-
+	("tp_vectorcall", vectorcallfunc),
 ]
 
-#type handling utils
+
+# type handling utils
 class TypeLookup(NamedTuple):
 	type: type
 	struct: Optional[Type[Struct]]
 
-# id(type): (type,Struct)
-type_dict: dict[int, TypeLookup] = {id(t): TypeLookup(t, None) for t in object.__subclasses__()}
 
-def update_types(types: dict[type, Type[Struct]]):
+# id(type): (type,Struct)
+type_dict: dict[int, TypeLookup] = {
+	id(t): TypeLookup(t, None) for t in object.__subclasses__()
+}
+
+
+def update_types(types: dict[type, type[Struct]]):
 	"""updates type_dict with dict of {type: Struct}"""
 	type_dict.update({id(t[0]): TypeLookup(*t) for t in types.items()})
 
+
 update_types({type: PyTypeObject})
+
 
 def get_struct(val):
 	"""returns a Struct for a python object"""
@@ -387,18 +438,27 @@ def get_struct(val):
 	except (KeyError, AttributeError):
 		return obj
 
-#heap type objects
-from .dict import PyDictKeysObject  # pylint: disable=wrong-import-position
+
+# heap type objects
+from .dict import PyDictKeysObject  # noqa: E402
+
 
 class PyHeapTypeObject(Struct):
 	_fields_ = [
-		("ht_type", PyTypeObject), ("as_async", PyAsyncMethods), ("as_number", PyNumberMethods),
-		("as_mapping", PyMappingMethods), ("as_sequence", PySequenceMethods),
-		("as_buffer", PyBufferProcs), ("ht_name", PyObject_p), ("ht_slots", PyObject_p),
-		("ht_qualname", PyObject_p), ("ht_cached_keys", ctypes.POINTER(PyDictKeysObject))
+		("ht_type", PyTypeObject),
+		("as_async", PyAsyncMethods),
+		("as_number", PyNumberMethods),
+		("as_mapping", PyMappingMethods),
+		("as_sequence", PySequenceMethods),
+		("as_buffer", PyBufferProcs),
+		("ht_name", PyObject_p),
+		("ht_slots", PyObject_p),
+		("ht_qualname", PyObject_p),
+		("ht_cached_keys", ctypes.POINTER(PyDictKeysObject)),
 	]
 
-#misc
+
+# misc
 Py_None = PyObject.from_address(id(None))
 Py_Ellipsis = PyObject.from_address(id(Ellipsis))
 Py_NotImplemented = PyObject.from_address(id(NotImplemented))

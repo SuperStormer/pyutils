@@ -1,15 +1,17 @@
-#pylint: disable=invalid-name
+# ruff: noqa: N803, N806
+"""Secure Remote Password implementation"""
+
 import hashlib
 import hmac
 from random import randint
 
 from .dh import defaults
 from .misc import bytes_to_long
-""" Secure Remote Password implementation"""
 
 N = defaults["p"]
 g = 2
 k = 3
+
 
 def gen_verifier(password):
 	salt = str(randint(0, 2**32 - 1)).encode()
@@ -18,7 +20,8 @@ def gen_verifier(password):
 	verifier = pow(g, x, N)
 	return salt, verifier
 
-async def server_validate(get_verifier, send, recv):  #pylint: disable=too-many-locals
+
+async def server_validate(get_verifier, send, recv):  # pylint: disable=too-many-locals
 	email = await recv()
 	salt, verifier = get_verifier(email)
 	A = await recv()
@@ -36,6 +39,7 @@ async def server_validate(get_verifier, send, recv):  #pylint: disable=too-many-
 	await send(ok)
 	return ok
 
+
 async def client_validate(email, password, send, recv):
 	a = randint(0, N - 1)
 	A = pow(g, a, N)
@@ -52,13 +56,14 @@ async def client_validate(email, password, send, recv):
 	await send(hmac.digest(K, salt, hashlib.sha256))
 	return await recv()
 
+
 async def client_zero_key(email, send, recv, A=0):
 	if A % N != 0:
 		raise ValueError(f"invalid A {A}")
 	await send(email)
 	await send(A)
 	salt = await recv()
-	B = await recv()
+	B = await recv()  # noqa: F841
 	S = 0  # because pow(0,b,N) and pow(mult of N,b,N) both == 0
 	K = hashlib.sha256(str(S).encode()).digest()
 	await send(hmac.digest(K, salt, hashlib.sha256))

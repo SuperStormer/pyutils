@@ -1,0 +1,34 @@
+line-length = 90
+target-version = "py311"
+
+[format]
+indent-style = "tab"
+docstring-code-format = true
+preview = true
+
+[lint]
+select = ["E", "F", "N", "UP", "ASYNC", "S", "BLE", "B", "A", "C4", "DTZ", "EXE", "PIE", "SLF", "SIM", "PL", "PERF", "FURB", "RUF", "FIX", "ISC", "PGH", "ARG", "FBT", "TRY", "COM818"]
+ignore = [
+	"E741", # ambiguous-variable-name
+	"FURB101", # read-whole-file
+	"FURB103", # write-whole-file
+	"PLR1714", # repeated-equality-comparison
+	"PLR2004", # magic-value-comparison
+	"RUF005", # collection-literal-concatenation
+	"RUF012", # mutable-class-default
+	"S101", # assert
+	"S304", # suspicious-insecure-cipher-usage
+	"S305", # suspicious-insecure-cipher-mode-usage
+	"S311", # suspicious-non-cryptographic-random-usage
+	"S403", # suspicious-pickle-import
+	"S404", # suspicious-subprocess-import
+	"S413", # suspicious-pycrypto-import
+	"S603", # subprocess-without-shell-equals-true
+	"SIM108", # if-else-block-instead-of-if-exp
+	"TRY003", # raise-vanilla-args
+	"UP015", # redundant-open-modes
+]
+preview = true
+
+[lint.pycodestyle]
+max-line-length = 100

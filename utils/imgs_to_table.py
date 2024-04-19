@@ -1,5 +1,5 @@
 def imgs_to_table(imgs, column_num):
-	"""imgs is (caption,image url) list. returns html table in string form """
+	"""imgs is (caption,image url) list. returns html table in string form"""
 	result = """<style>
 	table {
 		border-collapse: collapse;
@@ -12,7 +12,7 @@ def imgs_to_table(imgs, column_num):
 	for i, (caption, url) in enumerate(imgs):
 		if i % column_num == 0:
 			result += "<tr>"
-		result += f"<td>{caption}<br><img src=\"{url}\"></td>"
+		result += f'<td>{caption}<br><img src="{url}"></td>'
 		if i % column_num == column_num - 1:
 			result += "</tr>"
 	result += "</table>"

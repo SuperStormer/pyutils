@@ -1,10 +1,13 @@
 import string
 
+
 def long_to_bytes(x):
 	return x.to_bytes((x.bit_length() + 7) // 8, byteorder="big")
 
+
 def bytes_to_long(x):
 	return int.from_bytes(x, byteorder="big")
+
 
 letter_frequencies = {
 	"a": 8.497,
@@ -32,8 +35,9 @@ letter_frequencies = {
 	"w": 2.560,
 	"x": 0.150,
 	"y": 1.994,
-	"z": 0.077
+	"z": 0.077,
 }
+
 
 def english_like(s: str) -> float:
 	"""higher is better"""
@@ -41,11 +45,12 @@ def english_like(s: str) -> float:
 		return -1
 	return sum(letter_frequencies.get(c, 0) for c in s)
 
+
 def hamming(s: bytes, t: bytes):
 	dist = 0
 	for i, j in zip(s, t):
 		if i is None or j is None:
 			dist += 8
 		else:
-			dist += bin(i ^ j).count("1")
+			dist += (i ^ j).bit_count()
 	return dist

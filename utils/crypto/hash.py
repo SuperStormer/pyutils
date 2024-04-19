@@ -1,8 +1,9 @@
 import itertools
 
 from utils.bits import rol
-from utils.itertools2 import grouper
 from utils.crypto.xor import xor
+from utils.itertools2 import grouper
+
 
 def sha1_padding(msg, forced_len=None):
 	if forced_len is None:
@@ -10,10 +11,16 @@ def sha1_padding(msg, forced_len=None):
 	else:
 		msg_len = forced_len * 8
 	m = -(msg_len + 1 + 64) % 512
-	msg = (msg + bytes([0b10000000]) + b"\x00" * (m // 8) + msg_len.to_bytes(8, byteorder="big"))
+	msg = (
+		msg
+		+ bytes([0b10000000])
+		+ b"\x00" * (m // 8)
+		+ msg_len.to_bytes(8, byteorder="big")
+	)
 	return msg
 
-def sha1(msg, state=None, msg_added_len=None):  #pylint: disable=too-many-locals
+
+def sha1(msg, state=None, msg_added_len=None):  # noqa: PLR0914
 	if state is None:
 		h0 = 0x67452301
 		h1 = 0xEFCDAB89
@@ -34,7 +41,9 @@ def sha1(msg, state=None, msg_added_len=None):  #pylint: disable=too-many-locals
 			for c in map(bytes, grouper(chunk, 32 // 8))
 		] + [-1] * (80 - 16)
 		for i in range(16, 80):
-			words[i] = rol(words[i - 3] ^ words[i - 8] ^ words[i - 14] ^ words[i - 16], 1, 32)
+			words[i] = rol(
+				words[i - 3] ^ words[i - 8] ^ words[i - 14] ^ words[i - 16], 1, 32
+			)
 		a = h0
 		b = h1
 		c = h2
@@ -66,15 +75,19 @@ def sha1(msg, state=None, msg_added_len=None):  #pylint: disable=too-many-locals
 		h4 = (h4 + e) & max_word
 	return b"".join(h.to_bytes(4, byteorder="big") for h in (h0, h1, h2, h3, h4))
 
+
 def secret_prefix_mac(msg, key, hash_func=sha1):
 	return hash_func(key + msg)
+
 
 def sha1_hash_extension(orig_msg, new_msg, oracle, key_lens=None):
 	orig_hash = oracle(orig_msg)
 	if key_lens is None:
 		key_lens = itertools.count(1)
 	for key_len in key_lens:
-		glue_padding = sha1_padding(b"\x00" * key_len + orig_msg)[key_len + len(orig_msg):]
+		glue_padding = sha1_padding(b"\x00" * key_len + orig_msg)[
+			key_len + len(orig_msg) :
+		]
 		msg_added_len = key_len + len(orig_msg) + len(glue_padding)
 		state = [int.from_bytes(c, byteorder="big") for c in grouper(orig_hash, 4)]
 		forged_mac = sha1(new_msg, state, msg_added_len)
@@ -82,6 +95,7 @@ def sha1_hash_extension(orig_msg, new_msg, oracle, key_lens=None):
 		if oracle(forged_msg) == forged_mac:
 			return (forged_msg, forged_mac)
 	raise ValueError("No key_len is valid")
+
 
 def hmac(key, msg, hash_func, block_size=64):
 	if len(key) > block_size:

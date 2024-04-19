@@ -3,17 +3,17 @@ import smtplib
 import ssl
 import sys
 from email.message import EmailMessage
-from typing import Tuple, Union
+
 
 def send_email(
 	sender_email: str,
-	receiver_emails: Union[Tuple[str, ...], str],
+	receiver_emails: tuple[str, ...] | str,
 	password: str,
 	subject: str,
 	content: str,
 	*,
-	from_email: str = None,
-	smtp_server: str = "smtp.gmail.com"
+	from_email: str | None = None,
+	smtp_server: str = "smtp.gmail.com",
 ):
 	if from_email is None:
 		from_email = '""'
@@ -27,6 +27,7 @@ def send_email(
 	with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
 		server.login(sender_email, password)
 		server.send_message(message)
+
 
 if __name__ == "__main__":
 	sender_email = input("Sender?").strip()

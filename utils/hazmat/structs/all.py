@@ -1,4 +1,4 @@
-#pylint: disable=wildcard-import,unused-wildcard-import
+# ruff: noqa: F403
 from .base import *
 from .bytes import *
 from .collections import *

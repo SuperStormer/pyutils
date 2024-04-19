@@ -1,6 +1,8 @@
 import struct
 import zlib
+
 from .crypto.misc import long_to_bytes
+
 
 def fix_png_size2(f, max_width=10000, max_height=10000):
 	f.seek(0x18)
@@ -15,14 +17,17 @@ def fix_png_size2(f, max_width=10000, max_height=10000):
 				return (width, height)
 	raise ValueError("Couldn't match CRC32, try using a larger max_width/max_height")
 
+
 def fix_png_size(filename, max_width=10000, max_height=10000):
 	with open(filename, "rb+") as f:
 		fix_png_size2(f, max_width, max_height)
 
+
 def main():
-	#pylint: disable=import-outside-toplevel
-	import sys
+	import sys  # noqa: PLC0415
+
 	print(fix_png_size(sys.argv[1]))
+
 
 if __name__ == "__main__":
 	main()

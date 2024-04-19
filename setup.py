@@ -18,7 +18,13 @@ setuptools.setup(
 	project_urls={"Source Code": "https://github.com/SuperStormer/pyutils"},
 	scripts=glob.glob("scripts/*"),
 	install_requires=[
-	"pycryptodome>=3.15.0", "requests>=2.28.0", "aiofiles>=0.8.0", "aiohttp>=3.8.1",
-	"z3-solver>=4.10.2.0", "keystone-engine>=0.9.2", "beautifulsoup4>=4.11.1", "lxml>=4.9.2"
-	]
+		"pycryptodome>=3.15.0",
+		"requests>=2.28.0",
+		"aiofiles>=0.8.0",
+		"aiohttp>=3.8.1",
+		"z3-solver>=4.10.2.0",
+		"keystone-engine>=0.9.2",
+		"beautifulsoup4>=4.11.1",
+		"lxml>=4.9.2",
+	],
 )

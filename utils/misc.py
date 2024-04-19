@@ -1,17 +1,38 @@
 def is_palindrome(s):
 	return s == "".join(reversed(s))
 
+
 def rotations(n):
 	for i in range(len(n)):
 		yield n[i:] + n[:i]
 
+
 def num_to_word(n):
 	ones = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
 	teens = [
-		"ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen",
-		"eighteen", "nineteen"
+		"ten",
+		"eleven",
+		"twelve",
+		"thirteen",
+		"fourteen",
+		"fifteen",
+		"sixteen",
+		"seventeen",
+		"eighteen",
+		"nineteen",
 	]
-	tens = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
+	tens = [
+		"",
+		"",
+		"twenty",
+		"thirty",
+		"forty",
+		"fifty",
+		"sixty",
+		"seventy",
+		"eighty",
+		"ninety",
+	]
 	prefix = ""
 	if n == 0:
 		return "zero"

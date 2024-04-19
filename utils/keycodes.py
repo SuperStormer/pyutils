@@ -241,5 +241,5 @@ key_codes = {
 	245: "KEY_DISPLAY_OFF",
 	246: "KEY_WIMAX",
 	247: "KEY_RFKILL",
-	248: "KEY_MICMUTE"
+	248: "KEY_MICMUTE",
 }
