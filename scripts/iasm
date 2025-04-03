@@ -260,7 +260,7 @@ class AsmRepl:
 		self.print_vals()
 
 
-if __name__ == "__main__":
+def main():
 	import sys
 
 	args = {"regs"}
@@ -270,3 +270,7 @@ if __name__ == "__main__":
 		else:
 			args.add(arg)
 	AsmRepl(args).loop()
+
+
+if __name__ == "__main__":
+	main()
