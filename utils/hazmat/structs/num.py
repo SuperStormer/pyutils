@@ -115,8 +115,8 @@ else:
 			)
 
 
-Py_True = PyLongObject.from_address(id(True))
-Py_False = PyLongObject.from_address(id(False))
+Py_True = PyLongObject.from_address(id(True))  # noqa: FBT003
+Py_False = PyLongObject.from_address(id(False))  # noqa: FBT003
 
 
 # https://github.com/python/cpython/blob/master/Include/floatobject.h
@@ -157,7 +157,7 @@ class PyComplexObject(Struct):
 
 	@imag.setter
 	def imag(self, val):
-		self.cval.real.imag = val
+		self.cval.imag = val
 
 	@property
 	def value(self):

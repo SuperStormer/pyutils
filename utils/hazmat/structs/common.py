@@ -17,10 +17,16 @@ Py_ssize_t = ctypes.c_ssize_t  # pylint: disable=invalid-name
 
 class PyObject(Struct):
 	def get_type(self):
-		return type_dict[get_addr(self.ob_type)].type
+		addr = get_addr(self.ob_type)
+		if addr is None:
+			raise ValueError("ob_type is a null pointer")
+		return type_dict[addr].type
 
 	def get_struct_type(self):
-		return type_dict[get_addr(self.ob_type)].struct
+		addr = get_addr(self.ob_type)
+		if addr is None:
+			raise ValueError("ob_type is a null pointer")
+		return type_dict[addr].struct
 
 	def get_real(self):
 		return self.get_struct_type().from_address(ctypes.addressof(self))
@@ -80,7 +86,7 @@ PyObject_p = ctypes.POINTER(PyObject)
 # Add the two extra fields to PyObject by relying on _Py_ForgetReference to see if Py_TRACE_REFS is defined
 # credit to Crowthebird#1649 (<@!675937585624776717>)
 if hasattr(ctypes.pythonapi, "_Py_ForgetReference"):
-	PyObject._fields_ = [  # noqa: SLF001
+	PyObject._fields_ = [
 		("_ob_next", PyObject_p),
 		("_ob_prev", PyObject_p),
 		("ob_refcnt", ctypes.c_ssize_t),
@@ -88,7 +94,7 @@ if hasattr(ctypes.pythonapi, "_Py_ForgetReference"):
 	]
 else:
 	# TODO: ob_refcnt is a union now
-	PyObject._fields_ = [("ob_refcnt", ctypes.c_ssize_t), ("ob_type", PyTypeObject_p)]  # noqa: SLF001
+	PyObject._fields_ = [("ob_refcnt", ctypes.c_ssize_t), ("ob_type", PyTypeObject_p)]
 
 
 # https://github.com/python/cpython/blob/main/Include/object.h
@@ -465,7 +471,7 @@ class PyMutex(Struct):
 	_bits = field(ctypes.c_uint8)
 
 
-Py_GIL_DISABLED = sys.version_info >= (3, 13) and not sys._is_gil_enabled()
+Py_GIL_DISABLED = sys.version_info >= (3, 13) and not sys._is_gil_enabled()  # noqa: SLF001
 
 # heap type objects
 from .dict import PyDictKeysObject  # noqa: E402

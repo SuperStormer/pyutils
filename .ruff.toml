@@ -27,6 +27,7 @@ ignore = [
 	"SIM108", # if-else-block-instead-of-if-exp
 	"TRY003", # raise-vanilla-args
 	"UP015", # redundant-open-modes
+	"UP036", # outdated-version-block
 ]
 preview = true
 

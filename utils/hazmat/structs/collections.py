@@ -31,7 +31,8 @@ class PyListObject(Struct):
 	@property
 	def ob_item(self):
 		addr = get_addr(self._ob_item)
-		assert addr is not None
+		if addr is None:
+			raise ValueError("ob_item is a null pointer")
 		return (PyObject_p * self.ob_base.ob_size).from_address(addr)
 
 	value = ob_item
@@ -59,7 +60,8 @@ class PySetObject(Struct):
 	@property
 	def table(self):
 		addr = get_addr(self._table)
-		assert addr is not None
+		if addr is None:
+			raise ValueError("table is a null pointer")
 		return (setentry * (self.mask + 1)).from_address(addr)
 
 	value = table

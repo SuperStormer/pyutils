@@ -143,7 +143,8 @@ class PyUnicodeObject(Struct, PyStrMixin):
 		else:
 			arr_type = char_type.type * ascii_obj.length
 			field_addr = self.data.any
-			assert field_addr is not None
+			if field_addr is None:
+				raise ValueError("data.any is a null pointer")
 			return arr_type.from_address(field_addr)
 
 
