@@ -1,7 +1,42 @@
 import ctypes
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, overload
 
 
-class Struct(ctypes.Structure):
+@dataclass
+class Field:
+	type: type
+
+
+@overload
+def field(c_type: "type[ctypes._SimpleCData[T]]") -> "T": ...
+@overload
+def field(c_type: "type[U]") -> "U": ...
+def field(c_type: "type[ctypes._CDataType]") -> Any:
+	return Field(c_type)
+
+
+class StructMeta(type(ctypes.Structure)):
+	def __init__(cls, name, base, attrs):
+		# print(cls, name, base, attrs)
+		super().__init__(name, base, attrs)
+		fields = [
+			(key, value.type)
+			for key, value in cls.__dict__.items()
+			if isinstance(value, Field)
+		]
+		if fields:
+			print(fields)
+			cls._fields_ = [
+				(
+					name,
+					typ,
+				)
+				for name, typ in fields
+			]
+
+
+class Struct(ctypes.Structure, metaclass=StructMeta):
 	def __repr__(self):
 		cls = type(self)
 		fields = ",\n".join(
@@ -41,6 +76,21 @@ class Struct(ctypes.Structure):
 				raise e from None
 		else:
 			object.__setattr__(self, name, value)
+
+
+if TYPE_CHECKING:
+	import _ctypes
+	from typing import TypeVar
+
+	T = TypeVar("T")
+	U = TypeVar(
+		"U",
+		bound=_ctypes._Pointer[Any]
+		| _ctypes.CFuncPtr
+		| _ctypes.Union
+		| _ctypes.Structure
+		| _ctypes.Array[Any],
+	)
 
 
 class Union(ctypes.Union):
