@@ -1,4 +1,5 @@
 import ctypes
+import sys
 
 from utils.hazmat.misc import get_addr
 
@@ -9,7 +10,14 @@ from .num import PyLongObject
 
 # https://github.com/python/cpython/blob/master/Include/cpython/tupleobject.h
 class PyTupleObject(Struct):
-	_fields_ = [("ob_base", PyVarObject), ("_ob_item", PyObject_p * 1)]
+	if sys.version_info >= (3, 14):
+		_fields_ = [
+			("ob_base", PyVarObject),
+			("ob_hash", Py_hash_t),
+			("_ob_item", PyObject_p * 1),
+		]
+	else:
+		_fields_ = [("ob_base", PyVarObject), ("_ob_item", PyObject_p * 1)]
 
 	@property
 	def ob_item(self):
@@ -33,7 +41,7 @@ class PyListObject(Struct):
 	value = ob_item
 
 
-# https://github.com/python/cpython/blob/master/Include/setobject.h
+# https://github.com/python/cpython/blob/main/Include/cpython/setobject.h
 class setentry(Struct):  # noqa: N801
 	_fields_ = [("key", PyObject_p), ("hash", Py_hash_t)]
 

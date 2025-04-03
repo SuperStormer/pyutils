@@ -1,6 +1,7 @@
 # ruff: noqa: F401, F403 (unused imports and wildcard imports)
 import itertools
 import json
+import math
 import os
 import re
 import string

@@ -75,7 +75,7 @@ class PyMemoryViewObject(Struct):
 	_fields_ = [
 		("ob_base", PyVarObject),
 		("mbuf", ctypes.POINTER(PyManagedBufferObject)),
-		("hash", ctypes.c_ssize_t),
+		("hash", Py_hash_t),
 		("flags", ctypes.c_int),
 		("exports", ctypes.c_ssize_t),
 		("view", Py_buffer),

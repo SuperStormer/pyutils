@@ -1,4 +1,5 @@
 import ctypes
+import sys
 from enum import Enum, Flag
 from typing import NamedTuple, Optional, Type
 
@@ -25,10 +26,8 @@ class PyObject(Struct):
 		return self.get_struct_type().from_address(ctypes.addressof(self))
 
 
-# https://github.com/python/cpython/blob/master/Include/cpython/object.h
-# and https://github.com/python/cpython/blob/master/Include/object.h
-# also based on https://github.com/clarete/forbiddenfruit/blob/master/forbiddenfruit/__init__.py
-# PyTypeObject can"t be moved to a separate module because that causes errors due to codependency
+# https://github.com/python/cpython/blob/main/Doc/includes/typestruct.h
+# can't be moved to a separate module because that causes errors due to codependency
 class PyTypeObject(Struct):
 	class Flags(Flag):
 		# Set if the type object is dynamically allocated
@@ -88,14 +87,16 @@ if hasattr(ctypes.pythonapi, "_Py_ForgetReference"):
 		("ob_type", PyTypeObject_p),
 	]
 else:
+	# TODO: ob_refcnt is a union now
 	PyObject._fields_ = [("ob_refcnt", ctypes.c_ssize_t), ("ob_type", PyTypeObject_p)]  # noqa: SLF001
 
 
+# https://github.com/python/cpython/blob/main/Include/object.h
 class PyVarObject(Struct):
 	_fields_ = [("ob_base", PyObject), ("ob_size", ctypes.c_ssize_t)]
 
 
-# This is here due to codependencies and I don"t want to trigger some weird error
+# https://github.com/python/cpython/blob/main/Include/pybuffer.h
 class Py_buffer(Struct):  # noqa: N801
 	_fields_ = [
 		("buf", ctypes.c_void_p),
@@ -112,7 +113,7 @@ class Py_buffer(Struct):  # noqa: N801
 	]
 
 
-# bunch of funcs that the following classes use
+# https://github.com/python/cpython/blob/main/Include/object.h
 unaryfunc = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object)
 binaryfunc = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.py_object)
 ternaryfunc = ctypes.PYFUNCTYPE(
@@ -188,6 +189,7 @@ getbufferproc = ctypes.PYFUNCTYPE(
 releasebufferproc = ctypes.PYFUNCTYPE(None, ctypes.py_object, ctypes.POINTER(Py_buffer))
 
 
+# https://github.com/python/cpython/blob/main/Include/cpython/object.h
 class PyNumberMethods(Struct):
 	_fields_ = [
 		# normal ops
@@ -234,6 +236,7 @@ class PyNumberMethods(Struct):
 	]
 
 
+# https://github.com/python/cpython/blob/main/Include/cpython/object.h
 class PySequenceMethods(Struct):
 	_fields_ = [
 		("sq_length", lenfunc),
@@ -249,6 +252,7 @@ class PySequenceMethods(Struct):
 	]
 
 
+# https://github.com/python/cpython/blob/main/Include/cpython/object.h
 class PyMappingMethods(Struct):
 	_fields_ = [
 		("mp_length", lenfunc),
@@ -257,6 +261,7 @@ class PyMappingMethods(Struct):
 	]
 
 
+# https://github.com/python/cpython/blob/main/Include/cpython/object.h
 class PyAsyncMethods(Struct):
 	_fields_ = [
 		("am_await", unaryfunc),
@@ -266,17 +271,38 @@ class PyAsyncMethods(Struct):
 	]
 
 
+# https://github.com/python/cpython/blob/main/Include/cpython/object.h
 class PyBufferProcs(Struct):
 	_fields_ = [("bf_getbuffer", getbufferproc), ("bf_releasebuffer", releasebufferproc)]
 
 
-# https://github.com/python/cpython/blob/master/Include/methodobject.h
+# https://github.com/python/cpython/blob/main/Include/methodobject.h
+PyCFunction = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object)
+PyCFunctionFast = ctypes.PYFUNCTYPE(ctypes.py_object, ctypes.py_object, ctypes.c_ssize_t)
+PyCFunctionWithKeywords = ctypes.PYFUNCTYPE(
+	ctypes.py_object, ctypes.py_object, ctypes.py_object
+)
+PyCFunctionFastWithKeywords = ctypes.PYFUNCTYPE(
+	ctypes.py_object, ctypes.py_object, ctypes.c_ssize_t, ctypes.py_object
+)
+PyCMethod = ctypes.PYFUNCTYPE(
+	ctypes.py_object, PyTypeObject_p, ctypes.py_object, ctypes.c_ssize_t, ctypes.py_object
+)
+
+
+# https://github.com/python/cpython/blob/main/Include/methodobject.h
 class PyMethodDef(Struct):
-	_fields_ = [("ml_name", ctypes.c_char_p), ("ml_doc", ctypes.c_char_p)]
+	_fields_ = [
+		("ml_name", ctypes.c_char_p),
+		("ml_meth", PyCFunction),
+		("ml_flags", ctypes.c_int),  # TODO turn this into a Flag
+		("ml_doc", ctypes.c_char_p),
+	]
 
 
-# https://github.com/python/cpython/blob/master/Include/structmember.h
+# https://github.com/python/cpython/blob/main/Include/descrobject.h
 class PyMemberDef(Struct):
+	# https://github.com/python/cpython/blob/main/Include/structmember.h
 	class Type(Enum):
 		SHORT = 0
 		INT = 1
@@ -337,6 +363,7 @@ setter = ctypes.PYFUNCTYPE(
 )
 
 
+# https://github.com/python/cpython/blob/master/Include/descrobject.h
 class PyGetSetDef(Struct):
 	_fields_ = [
 		("name", ctypes.c_char_p),
@@ -348,7 +375,7 @@ class PyGetSetDef(Struct):
 
 
 # type object fields
-PyTypeObject._fields_ = [  # noqa: SLF001
+_fields = [  # noqa: SLF001
 	("ob_base", PyVarObject),
 	("tp_name", ctypes.c_char_p),
 	# for allocation
@@ -406,8 +433,15 @@ PyTypeObject._fields_ = [  # noqa: SLF001
 	("tp_del", destructor),
 	("tp_version_tag", ctypes.c_uint),
 	("tp_finalize", destructor),
-	("tp_vectorcall", vectorcallfunc),
 ]
+if sys.version_info >= (3, 10):
+	_fields.append(("tp_vectorcall", vectorcallfunc))
+if sys.version_info >= (3, 12):
+	_fields.append(("tp_watched", ctypes.c_ubyte))
+
+
+PyTypeObject._fields_ = _fields
+del _fields
 
 
 # type handling utils
@@ -439,10 +473,19 @@ def get_struct(val):
 		return obj
 
 
+# GIL-free types
+# https://github.com/python/cpython/blob/main/Include/cpython/lock.h
+class PyMutex(Struct):
+	_fields_ = [("_bits", ctypes.c_uint8)]
+
+
+Py_GIL_DISABLED = sys.version_info >= (3, 13) and not sys._is_gil_enabled()
+
 # heap type objects
 from .dict import PyDictKeysObject  # noqa: E402
 
 
+# https://github.com/python/cpython/blob/master/Include/cpython/object.h
 class PyHeapTypeObject(Struct):
 	_fields_ = [
 		("ht_type", PyTypeObject),
@@ -456,6 +499,7 @@ class PyHeapTypeObject(Struct):
 		("ht_qualname", PyObject_p),
 		("ht_cached_keys", ctypes.POINTER(PyDictKeysObject)),
 	]
+	# TODO update
 
 
 # misc

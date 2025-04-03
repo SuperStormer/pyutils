@@ -1,4 +1,5 @@
 import ctypes
+import sys
 from enum import Enum
 
 from .base import Struct, Union
@@ -7,7 +8,10 @@ from .common import Py_hash_t, PyObject, update_types
 
 # https://github.com/python/cpython/blob/master/Include/cpython/unicodeobject.h
 class CharType(Enum):
-	wchar_t = (0, ctypes.c_wchar, "PyUnicode_WCHAR_KIND")
+	type: type[ctypes._SimpleCData]
+	kind: str
+	if sys.version_info < (3, 11):
+		wchar_t = (0, ctypes.c_wchar, "PyUnicode_WCHAR_KIND")
 	Py_UCS1 = (1, ctypes.c_uint8, "PyUnicode_1BYTE_KIND")
 	Py_UCS2 = (2, ctypes.c_uint16, "PyUnicode_2BYTE_KIND")
 	Py_UCS4 = (4, ctypes.c_uint32, "PyUnicode_4BYTE_KIND")
@@ -38,22 +42,48 @@ class PyAsciiObject(Struct, PyStrMixin):
 		SSTATE_INTERNED_IMMORTAL = 2
 
 	class State(Struct):
-		_fields_ = [
-			("interned", ctypes.c_uint, 2),
-			("kind", ctypes.c_uint, 3),
-			("compact", ctypes.c_uint, 1),
-			("ascii", ctypes.c_uint, 1),
-			("ready", ctypes.c_uint, 1),
-			("_padding", ctypes.c_uint, 24),
-		]
+		if sys.version_info >= (3, 14):
+			_fields_ = [
+				("interned", ctypes.c_uint16),
+				("kind", ctypes.c_ushort, 3),
+				("compact", ctypes.c_ushort, 1),
+				("ascii", ctypes.c_ushort, 1),
+				("statically_allocated", ctypes.c_ushort, 1),
+				("_padding", ctypes.c_ushort, 10),
+			]
+		elif sys.version_info >= (3, 12):
+			_fields_ = [
+				("interned", ctypes.c_uint, 2),
+				("kind", ctypes.c_uint, 3),
+				("compact", ctypes.c_uint, 1),
+				("ascii", ctypes.c_uint, 1),
+				("_padding", ctypes.c_uint, 25),
+			]
+		else:
+			_fields_ = [
+				("interned", ctypes.c_uint, 2),
+				("kind", ctypes.c_uint, 3),
+				("compact", ctypes.c_uint, 1),
+				("ascii", ctypes.c_uint, 1),
+				("ready", ctypes.c_uint, 1),
+				("_padding", ctypes.c_uint, 24),
+			]
 
-	_fields_ = [
-		("ob_base", PyObject),
-		("length", ctypes.c_ssize_t),
-		("hash", Py_hash_t),
-		("state", State),
-		("wstr", ctypes.c_wchar_p),
-	]
+	if sys.version_info >= (3, 12):
+		_fields_ = [
+			("ob_base", PyObject),
+			("length", ctypes.c_ssize_t),
+			("hash", Py_hash_t),
+			("state", State),
+		]
+	else:
+		_fields_ = [
+			("ob_base", PyObject),
+			("length", ctypes.c_ssize_t),
+			("hash", Py_hash_t),
+			("state", State),
+			("wstr", ctypes.c_wchar_p),
+		]
 
 	@property
 	def value(self):
@@ -81,12 +111,19 @@ class PyAsciiObject(Struct, PyStrMixin):
 
 
 class PyCompactUnicodeObject(Struct, PyStrMixin):
-	_fields_ = [
-		("_base", PyAsciiObject),
-		("utf8_length", ctypes.c_ssize_t),
-		("utf8", ctypes.c_char_p),
-		("wstr_length", ctypes.c_ssize_t),
-	]
+	if sys.version_info >= (3, 12):
+		_fields_ = [
+			("_base", PyAsciiObject),
+			("utf8_length", ctypes.c_ssize_t),
+			("utf8", ctypes.c_char_p),
+		]
+	else:
+		_fields_ = [
+			("_base", PyAsciiObject),
+			("utf8_length", ctypes.c_ssize_t),
+			("utf8", ctypes.c_char_p),
+			("wstr_length", ctypes.c_ssize_t),
+		]
 
 	@property
 	def value(self):
@@ -111,7 +148,7 @@ class PyUnicodeObject(Struct, PyStrMixin):
 	def value(self):
 		ascii_obj = self._base._base  # noqa: SLF001
 		char_type = ascii_obj.char_type
-		if char_type == CharType.wchar_t:
+		if sys.version_info < (3, 11) and char_type == CharType.wchar_t:
 			return ascii_obj.wstr
 		else:
 			arr_type = char_type.type * ascii_obj.length

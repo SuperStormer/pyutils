@@ -1,4 +1,5 @@
 import ctypes
+import sys
 import warnings
 
 from .base import Struct
@@ -6,46 +7,109 @@ from .common import PyObject, PyVarObject, update_types
 
 # https://github.com/python/cpython/blob/master/Include/cpython/longintrepr.h
 # credit to Crowthebird#1649 (<@!675937585624776717>) for digit size check
-_digit_size = PyVarObject.from_object(32768).ob_size - 1
+if sys.version_info >= (3, 12):
+	# FIXME _digit_size check for 3.12+
+	_digit_size = 0
+else:
+	_digit_size = PyVarObject.from_object(32768).ob_size - 1
 _digit_type = (ctypes.c_uint32, ctypes.c_ushort)[_digit_size]
 
+PyLong_NON_SIZE_BITS = 3
+PyLong_SHIFT = (30, 15)[_digit_size]
+PyLong_BASE = 1 << PyLong_SHIFT
+PyLong_MASK = PyLong_BASE - 1
 
-class PyLongObject(Struct):
-	SHIFT = (30, 15)[_digit_size]
-	BASE = 1 << SHIFT
-	MASK = BASE - 1
-	_fields_ = [("ob_base", PyVarObject), ("_ob_digit", _digit_type)]
+if sys.version_info >= (3, 12):
 
-	@property
-	def ob_digit(self):
-		return self.get_vla("_ob_digit", _digit_type, abs(self.ob_base.ob_size))
+	class PyLongValue(Struct):
+		_fields_ = [("lv_tag", ctypes.c_ulong), ("_ob_digit", _digit_type)]
 
-	@property
-	def value(self):
-		ob_size = self.ob_base.ob_size
-		if ob_size == 0:
-			return 0
-		value = sum(
-			val * 2 ** (PyLongObject.SHIFT * i) for i, val in enumerate(self.ob_digit)
-		)
-		sign = 1 if ob_size > 0 else -1
-		return sign * value
+		@property
+		def ob_digit(self):
+			return self.get_vla("_ob_digit", _digit_type, abs(self.ob_base.ob_size))
 
-	@value.setter
-	def value(self, val):
-		sign = 1 if val > 0 else -1
-		val = abs(val)
-		digits = []
-		while val > 0:
-			digits.append(val & PyLongObject.MASK)
-			val >>= PyLongObject.SHIFT
-		if len(digits) > abs(self.ob_base.ob_size):
-			warnings.warn(
-				f"Number of digits ({len(digits)}) is greater than current ({self.ob_base.ob_size})",
-				stacklevel=2,
+		@property
+		def ndigits(self):
+			return self.lv_tag >> PyLong_NON_SIZE_BITS
+
+		@property
+		def value(self):
+			# 2 lower bits
+			# 0 is positive, 1 is zero, 2 is negative
+			sign_bits = self.lv_tag & ~3
+			if sign_bits == 1:
+				return 0
+			value = sum(
+				val * 2 ** (PyLong_SHIFT * i) for i, val in enumerate(self.ob_digit)
 			)
-		self.ob_base.ob_size = len(digits) * sign
-		ctypes.memmove(self.ob_digit, (_digit_type * len(digits))(*(digits)), len(digits))
+			sign = 1 if sign_bits == 0 else -1
+			return sign * value
+
+		@value.setter
+		def value(self, val):
+			val = abs(val)
+			digits = []
+			while val > 0:
+				digits.append(val & PyLong_MASK)
+				val >>= PyLong_SHIFT
+			if len(digits) > abs(self.ndigits):
+				warnings.warn(
+					f"Number of digits ({len(digits)}) is greater than current ({self.ndigits})",
+					stacklevel=2,
+				)
+			sign_bits = 0 if val > 0 else 1 if val == 0 else 2
+			self.lv_tag = (len(digits) << PyLong_NON_SIZE_BITS) | sign_bits
+			ctypes.memmove(
+				self.ob_digit, (_digit_type * len(digits))(*digits), len(digits)
+			)
+
+		def is_small_int(self):
+			return bool(self.lv_tag & (1 << 3))
+
+	class PyLongObject(Struct):
+		_fields_ = [("ob_base", PyObject), ("long_value", PyLongValue)]
+
+else:
+
+	class PyLongObject(Struct):
+		_fields_ = [("ob_base", PyVarObject), ("_ob_digit", _digit_type)]
+
+		@property
+		def ob_digit(self):
+			return self.get_vla("_ob_digit", _digit_type, abs(self.ob_base.ob_size))
+
+		@property
+		def ndigits(self):
+			return self.ob_base.ob_size
+
+		@property
+		def value(self):
+			ob_size = self.ob_base.ob_size
+			if ob_size == 0:
+				return 0
+			value = sum(
+				val * 2 ** (PyLong_SHIFT * i) for i, val in enumerate(self.ob_digit)
+			)
+			sign = 1 if ob_size > 0 else -1
+			return sign * value
+
+		@value.setter
+		def value(self, val):
+			sign = 1 if val > 0 else -1
+			val = abs(val)
+			digits = []
+			while val > 0:
+				digits.append(val & PyLong_MASK)
+				val >>= PyLong_SHIFT
+			if len(digits) > abs(self.ob_base.ob_size):
+				warnings.warn(
+					f"Number of digits ({len(digits)}) is greater than current ({self.ob_base.ob_size})",
+					stacklevel=2,
+				)
+			self.ob_base.ob_size = len(digits) * sign
+			ctypes.memmove(
+				self.ob_digit, (_digit_type * len(digits))(*digits), len(digits)
+			)
 
 
 Py_True = PyLongObject.from_address(id(True))
