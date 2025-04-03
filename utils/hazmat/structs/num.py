@@ -2,7 +2,7 @@ import ctypes
 import sys
 import warnings
 
-from .base import Struct
+from .base import Struct, field
 from .common import PyObject, PyVarObject, update_types
 
 # https://github.com/python/cpython/blob/master/Include/cpython/longintrepr.h
@@ -22,7 +22,8 @@ PyLong_MASK = PyLong_BASE - 1
 if sys.version_info >= (3, 12):
 
 	class PyLongValue(Struct):
-		_fields_ = [("lv_tag", ctypes.c_ulong), ("_ob_digit", _digit_type)]
+		lv_tag = field(ctypes.c_ulong)
+		_ob_digit = field(_digit_type)
 
 		@property
 		def ob_digit(self):
@@ -67,12 +68,14 @@ if sys.version_info >= (3, 12):
 			return bool(self.lv_tag & (1 << 3))
 
 	class PyLongObject(Struct):
-		_fields_ = [("ob_base", PyObject), ("long_value", PyLongValue)]
+		ob_base = field(PyObject)
+		long_value = field(PyLongValue)
 
 else:
 
 	class PyLongObject(Struct):
-		_fields_ = [("ob_base", PyVarObject), ("_ob_digit", _digit_type)]
+		ob_base = field(PyVarObject)
+		_ob_digit = field(_digit_type)
 
 		@property
 		def ob_digit(self):
@@ -118,7 +121,8 @@ Py_False = PyLongObject.from_address(id(False))
 
 # https://github.com/python/cpython/blob/master/Include/floatobject.h
 class PyFloatObject(Struct):
-	_fields_ = [("ob_base", PyObject), ("ob_fval", ctypes.c_double)]
+	ob_base = field(PyObject)
+	ob_fval = field(ctypes.c_double)
 
 	@property
 	def value(self):
@@ -131,11 +135,13 @@ class PyFloatObject(Struct):
 
 # https://github.com/python/cpython/blob/master/Include/complexobject.h
 class Py_complex(Struct):  # noqa: N801
-	_fields_ = [("real", ctypes.c_double), ("imag", ctypes.c_double)]
+	real = field(ctypes.c_double)
+	imag = field(ctypes.c_double)
 
 
 class PyComplexObject(Struct):
-	_fields_ = [("ob_base", PyObject), ("cval", Py_complex)]
+	ob_base = field(PyObject)
+	cval = field(Py_complex)
 
 	@property
 	def real(self):

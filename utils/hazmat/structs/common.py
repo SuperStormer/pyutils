@@ -1,11 +1,11 @@
 import ctypes
 import sys
 from enum import Enum, Flag
-from typing import NamedTuple, Optional, Type
+from typing import NamedTuple, Type
 
 from utils.hazmat.misc import get_addr
 
-from .base import Struct
+from .base import Struct, field
 
 Py_hash_t = ctypes.c_ssize_t  # pylint: disable=invalid-name
 Py_ssize_t = ctypes.c_ssize_t  # pylint: disable=invalid-name
@@ -93,24 +93,23 @@ else:
 
 # https://github.com/python/cpython/blob/main/Include/object.h
 class PyVarObject(Struct):
-	_fields_ = [("ob_base", PyObject), ("ob_size", ctypes.c_ssize_t)]
+	ob_base = field(PyObject)
+	ob_size = field(ctypes.c_ssize_t)
 
 
 # https://github.com/python/cpython/blob/main/Include/pybuffer.h
 class Py_buffer(Struct):  # noqa: N801
-	_fields_ = [
-		("buf", ctypes.c_void_p),
-		("obj", PyObject_p),  # owned ref
-		("len", ctypes.c_ssize_t),
-		("itemsize", ctypes.c_ssize_t),
-		("readonly", ctypes.c_int),
-		("ndim", ctypes.c_int),
-		("format", ctypes.c_char_p),
-		("shape", ctypes.POINTER(ctypes.c_ssize_t)),
-		("strides", ctypes.POINTER(ctypes.c_ssize_t)),
-		("suboffsets", ctypes.POINTER(ctypes.c_ssize_t)),
-		("internal", ctypes.c_void_p),
-	]
+	buf = field(ctypes.c_void_p)
+	obj = field(PyObject_p)  # owned ref
+	len = field(ctypes.c_ssize_t)
+	itemsize = field(ctypes.c_ssize_t)
+	readonly = field(ctypes.c_int)
+	ndim = field(ctypes.c_int)
+	format = field(ctypes.c_char_p)
+	shape = field(ctypes.POINTER(ctypes.c_ssize_t))
+	strides = field(ctypes.POINTER(ctypes.c_ssize_t))
+	suboffsets = field(ctypes.POINTER(ctypes.c_ssize_t))
+	internal = field(ctypes.c_void_p)
 
 
 # https://github.com/python/cpython/blob/main/Include/object.h
@@ -191,89 +190,82 @@ releasebufferproc = ctypes.PYFUNCTYPE(None, ctypes.py_object, ctypes.POINTER(Py_
 
 # https://github.com/python/cpython/blob/main/Include/cpython/object.h
 class PyNumberMethods(Struct):
-	_fields_ = [
-		# normal ops
-		("nb_add", binaryfunc),
-		("nb_subtract", binaryfunc),
-		("nb_multiply", binaryfunc),
-		("nb_remainder", binaryfunc),
-		("nb_divmod", binaryfunc),
-		("nb_power", binaryfunc),
-		("nb_negative", unaryfunc),
-		("nb_positive", unaryfunc),
-		("nb_absolute", unaryfunc),
-		("nb_bool", inquiry),
-		("nb_invert", unaryfunc),
-		("nb_lshift", binaryfunc),
-		("nb_rshift", binaryfunc),
-		("nb_and", binaryfunc),
-		("nb_xor", binaryfunc),
-		("nb_or", binaryfunc),
-		("nb_int", unaryfunc),
-		("nb_reserved", ctypes.c_void_p),  # used to be nb_long
-		("nb_float", unaryfunc),
-		# inplace ops
-		("nb_inplace_add", binaryfunc),
-		("nb_inplace_subtract", binaryfunc),
-		("nb_inplace_multiply", binaryfunc),
-		("nb_inplace_remainder", binaryfunc),
-		("nb_inplace_power", ternaryfunc),
-		("nb_inplace_lshift", binaryfunc),
-		("nb_inplace_rshift", binaryfunc),
-		("nb_inplace_and", binaryfunc),
-		("nb_inplace_xor", binaryfunc),
-		("nb_inplace_or", binaryfunc),
-		# division
-		("nb_floor_divide", binaryfunc),
-		("nb_true_divide", binaryfunc),
-		("nb_inplace_floor_divide", binaryfunc),
-		("nb_inplace_true_divide", binaryfunc),
-		# __index__()
-		("nb_index", unaryfunc),
-		# matmul
-		("nb_matrix_multiply", binaryfunc),
-		("nb_inplace_matrix_multiply", binaryfunc),
-	]
+	# normal ops
+	nb_add = field(binaryfunc)
+	nb_subtract = field(binaryfunc)
+	nb_multiply = field(binaryfunc)
+	nb_remainder = field(binaryfunc)
+	nb_divmod = field(binaryfunc)
+	nb_power = field(binaryfunc)
+	nb_negative = field(unaryfunc)
+	nb_positive = field(unaryfunc)
+	nb_absolute = field(unaryfunc)
+	nb_bool = field(inquiry)
+	nb_invert = field(unaryfunc)
+	nb_lshift = field(binaryfunc)
+	nb_rshift = field(binaryfunc)
+	nb_and = field(binaryfunc)
+	nb_xor = field(binaryfunc)
+	nb_or = field(binaryfunc)
+	nb_int = field(unaryfunc)
+	nb_reserved = field(ctypes.c_void_p)  # used to be nb_long
+	nb_float = field(unaryfunc)
+	# inplace ops
+	nb_inplace_add = field(binaryfunc)
+	nb_inplace_subtract = field(binaryfunc)
+	nb_inplace_multiply = field(binaryfunc)
+	nb_inplace_remainder = field(binaryfunc)
+	nb_inplace_power = field(ternaryfunc)
+	nb_inplace_lshift = field(binaryfunc)
+	nb_inplace_rshift = field(binaryfunc)
+	nb_inplace_and = field(binaryfunc)
+	nb_inplace_xor = field(binaryfunc)
+	nb_inplace_or = field(binaryfunc)
+	# division
+	nb_floor_divide = field(binaryfunc)
+	nb_true_divide = field(binaryfunc)
+	nb_inplace_floor_divide = field(binaryfunc)
+	nb_inplace_true_divide = field(binaryfunc)
+	# __index__()
+	nb_index = field(unaryfunc)
+	# matmul
+	nb_matrix_multiply = field(binaryfunc)
+	nb_inplace_matrix_multiply = field(binaryfunc)
 
 
 # https://github.com/python/cpython/blob/main/Include/cpython/object.h
 class PySequenceMethods(Struct):
-	_fields_ = [
-		("sq_length", lenfunc),
-		("sq_concat", binaryfunc),
-		("sq_repeat", ssizeargfunc),
-		("sq_item", ssizeargfunc),
-		("was_sq_slice", ctypes.c_void_p),
-		("sq_ass_item", ssizeobjargproc),
-		("was_sq_ass_slice", ctypes.c_void_p),
-		("sq_contains", objobjproc),
-		("sq_inplace_concat", binaryfunc),
-		("sq_inplace_repeat", ssizeargfunc),
-	]
+	sq_length = field(lenfunc)
+	sq_concat = field(binaryfunc)
+	sq_repeat = field(ssizeargfunc)
+	sq_item = field(ssizeargfunc)
+	was_sq_slice = field(ctypes.c_void_p)
+	sq_ass_item = field(ssizeobjargproc)
+	was_sq_ass_slice = field(ctypes.c_void_p)
+	sq_contains = field(objobjproc)
+	sq_inplace_concat = field(binaryfunc)
+	sq_inplace_repeat = field(ssizeargfunc)
 
 
 # https://github.com/python/cpython/blob/main/Include/cpython/object.h
 class PyMappingMethods(Struct):
-	_fields_ = [
-		("mp_length", lenfunc),
-		("mp_subscript", binaryfunc),
-		("mp_ass_subscript", objobjproc),
-	]
+	mp_length = field(lenfunc)
+	mp_subscript = field(binaryfunc)
+	mp_ass_subscript = field(objobjproc)
 
 
 # https://github.com/python/cpython/blob/main/Include/cpython/object.h
 class PyAsyncMethods(Struct):
-	_fields_ = [
-		("am_await", unaryfunc),
-		("am_aiter", unaryfunc),
-		("am_anext", unaryfunc),
-		("am_send", sendfunc),
-	]
+	am_await = field(unaryfunc)
+	am_aiter = field(unaryfunc)
+	am_anext = field(unaryfunc)
+	am_send = field(sendfunc)
 
 
 # https://github.com/python/cpython/blob/main/Include/cpython/object.h
 class PyBufferProcs(Struct):
-	_fields_ = [("bf_getbuffer", getbufferproc), ("bf_releasebuffer", releasebufferproc)]
+	bf_getbuffer = field(getbufferproc)
+	bf_releasebuffer = field(releasebufferproc)
 
 
 # https://github.com/python/cpython/blob/main/Include/methodobject.h
@@ -292,12 +284,10 @@ PyCMethod = ctypes.PYFUNCTYPE(
 
 # https://github.com/python/cpython/blob/main/Include/methodobject.h
 class PyMethodDef(Struct):
-	_fields_ = [
-		("ml_name", ctypes.c_char_p),
-		("ml_meth", PyCFunction),
-		("ml_flags", ctypes.c_int),  # TODO turn this into a Flag
-		("ml_doc", ctypes.c_char_p),
-	]
+	ml_name = field(ctypes.c_char_p)
+	ml_meth = field(PyCFunction)
+	ml_flags = field(ctypes.c_int)  # TODO turn this into a Flag
+	ml_doc = field(ctypes.c_char_p)
 
 
 # https://github.com/python/cpython/blob/main/Include/descrobject.h
@@ -339,13 +329,11 @@ class PyMemberDef(Struct):
 		PY_WRITE_RESTRICTED = 4
 		RESTRICTED = READ_RESTRICTED | PY_WRITE_RESTRICTED
 
-	_fields_ = [
-		("name", ctypes.c_char_p),
-		("_type", ctypes.c_int),
-		("offset", ctypes.c_ssize_t),
-		("_flags", ctypes.c_int),
-		("doc", ctypes.c_char_p),
-	]
+	name = field(ctypes.c_char_p)
+	_type = field(ctypes.c_int)
+	offset = field(ctypes.c_ssize_t)
+	_flags = field(ctypes.c_int)
+	doc = field(ctypes.c_char_p)
 
 	@property
 	def type(self):
@@ -365,13 +353,11 @@ setter = ctypes.PYFUNCTYPE(
 
 # https://github.com/python/cpython/blob/master/Include/descrobject.h
 class PyGetSetDef(Struct):
-	_fields_ = [
-		("name", ctypes.c_char_p),
-		("get", getter),
-		("set", setter),
-		("doc", ctypes.c_char_p),
-		("closure", ctypes.c_void_p),
-	]
+	name = field(ctypes.c_char_p)
+	get = field(getter)
+	set = field(setter)
+	doc = field(ctypes.c_char_p)
+	closure = field(ctypes.c_void_p)
 
 
 # type object fields
@@ -447,7 +433,7 @@ del _fields
 # type handling utils
 class TypeLookup(NamedTuple):
 	type: type
-	struct: Optional[Type[Struct]]
+	struct: Type[Struct] | None
 
 
 # id(type): (type,Struct)
@@ -476,7 +462,7 @@ def get_struct(val):
 # GIL-free types
 # https://github.com/python/cpython/blob/main/Include/cpython/lock.h
 class PyMutex(Struct):
-	_fields_ = [("_bits", ctypes.c_uint8)]
+	_bits = field(ctypes.c_uint8)
 
 
 Py_GIL_DISABLED = sys.version_info >= (3, 13) and not sys._is_gil_enabled()
@@ -487,18 +473,17 @@ from .dict import PyDictKeysObject  # noqa: E402
 
 # https://github.com/python/cpython/blob/master/Include/cpython/object.h
 class PyHeapTypeObject(Struct):
-	_fields_ = [
-		("ht_type", PyTypeObject),
-		("as_async", PyAsyncMethods),
-		("as_number", PyNumberMethods),
-		("as_mapping", PyMappingMethods),
-		("as_sequence", PySequenceMethods),
-		("as_buffer", PyBufferProcs),
-		("ht_name", PyObject_p),
-		("ht_slots", PyObject_p),
-		("ht_qualname", PyObject_p),
-		("ht_cached_keys", ctypes.POINTER(PyDictKeysObject)),
-	]
+	ht_type = field(PyTypeObject)
+	as_async = field(PyAsyncMethods)
+	as_number = field(PyNumberMethods)
+	as_mapping = field(PyMappingMethods)
+	as_sequence = field(PySequenceMethods)
+	as_buffer = field(PyBufferProcs)
+	ht_name = field(PyObject_p)
+	ht_slots = field(PyObject_p)
+	ht_qualname = field(PyObject_p)
+	ht_cached_keys = field(ctypes.POINTER(PyDictKeysObject))
+
 	# TODO update
 
 

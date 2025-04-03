@@ -1,7 +1,7 @@
 import ctypes
 
-from utils.hazmat.structs.base import Struct
-from utils.hazmat.structs.common import (
+from .base import Struct, field
+from .common import (
 	PyMethodDef,
 	PyObject_p,
 	PyTypeObject_p,
@@ -11,17 +11,16 @@ from utils.hazmat.structs.common import (
 
 # https://github.com/python/cpython/blob/main/Include/cpython/methodobject.h
 class PyCFunctionObject(Struct):
-	_fields_ = [
-		("ob_base", PyObject_p),
-		("m_ml", ctypes.POINTER(PyMethodDef)),
-		("m_self", PyObject_p),
-		("m_module", PyObject_p),
-		("vectorcallfunc", vectorcallfunc),
-	]
+	ob_base = field(PyObject_p)
+	m_ml = field(ctypes.POINTER(PyMethodDef))
+	m_self = field(PyObject_p)
+	m_module = field(PyObject_p)
+	vectorcallfunc = field(vectorcallfunc)
 
 
 class PyCMethodObject(Struct):
-	_fields_ = [("func", PyCFunctionObject), ("mm_class", PyTypeObject_p)]
+	func = field(PyCFunctionObject)
+	mm_class = field(PyTypeObject_p)
 
 
 # TODO python functions, update_structs

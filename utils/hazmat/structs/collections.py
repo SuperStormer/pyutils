@@ -3,21 +3,17 @@ import sys
 
 from utils.hazmat.misc import get_addr
 
-from .base import Struct
+from .base import Struct, field
 from .common import Py_hash_t, PyObject, PyObject_p, PyVarObject, update_types
 from .num import PyLongObject
 
 
 # https://github.com/python/cpython/blob/master/Include/cpython/tupleobject.h
 class PyTupleObject(Struct):
+	ob_base = field(PyVarObject)
 	if sys.version_info >= (3, 14):
-		_fields_ = [
-			("ob_base", PyVarObject),
-			("ob_hash", Py_hash_t),
-			("_ob_item", PyObject_p * 1),
-		]
-	else:
-		_fields_ = [("ob_base", PyVarObject), ("_ob_item", PyObject_p * 1)]
+		ob_hash = field(Py_hash_t)
+	_ob_item = field(PyObject_p * 1)
 
 	@property
 	def ob_item(self):
@@ -28,54 +24,54 @@ class PyTupleObject(Struct):
 
 # https://github.com/python/cpython/blob/master/Include/cpython/listobject.h
 class PyListObject(Struct):
-	_fields_ = [
-		("ob_base", PyVarObject),
-		("_ob_item", ctypes.POINTER(PyObject_p)),
-		("allocated", ctypes.c_ssize_t),
-	]
+	ob_base = field(PyVarObject)
+	_ob_item = field(ctypes.POINTER(PyObject_p))
+	allocated = field(ctypes.c_ssize_t)
 
 	@property
 	def ob_item(self):
-		return (PyObject_p * self.ob_base.ob_size).from_address(get_addr(self._ob_item))
+		addr = get_addr(self._ob_item)
+		assert addr is not None
+		return (PyObject_p * self.ob_base.ob_size).from_address(addr)
 
 	value = ob_item
 
 
 # https://github.com/python/cpython/blob/main/Include/cpython/setobject.h
 class setentry(Struct):  # noqa: N801
-	_fields_ = [("key", PyObject_p), ("hash", Py_hash_t)]
+	key = field(PyObject_p)
+	hash = field(Py_hash_t)
 
 
 class PySetObject(Struct):
 	MINSIZE = 8
-	_fields_ = [
-		("ob_base", PyObject),
-		("fill", ctypes.c_ssize_t),
-		("used", ctypes.c_ssize_t),
-		("mask", ctypes.c_ssize_t),
-		("_table", ctypes.POINTER(setentry)),
-		("hash", Py_hash_t),
-		("finger", ctypes.c_ssize_t),
-		("smalltable", (setentry * MINSIZE)),
-		("weakreflist", PyObject_p),
-	]
+
+	ob_base = field(PyObject)
+	fill = field(ctypes.c_ssize_t)
+	used = field(ctypes.c_ssize_t)
+	mask = field(ctypes.c_ssize_t)
+	_table = field(ctypes.POINTER(setentry))
+	hash = field(Py_hash_t)
+	finger = field(ctypes.c_ssize_t)
+	smalltable = field(setentry * MINSIZE)
+	weakreflist = field(PyObject_p)
 
 	@property
 	def table(self):
-		return (setentry * (self.mask + 1)).from_address(get_addr(self._table))
+		addr = get_addr(self._table)
+		assert addr is not None
+		return (setentry * (self.mask + 1)).from_address(addr)
 
 	value = table
 
 
 # https://github.com/python/cpython/blob/master/Objects/rangeobject.c
 class rangeobject(Struct):  # noqa: N801
-	_fields_ = [
-		("ob_base", PyObject),
-		("_start", PyObject_p),
-		("_stop", PyObject_p),
-		("_step", PyObject_p),
-		("_length", PyObject_p),
-	]
+	ob_base = field(PyObject)
+	_start = field(PyObject_p)
+	_stop = field(PyObject_p)
+	_step = field(PyObject_p)
+	_length = field(PyObject_p)
 
 
 for _field in ["start", "stop", "step", "length"]:

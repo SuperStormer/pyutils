@@ -2,7 +2,7 @@ import ctypes
 import sys
 from enum import Enum
 
-from .base import Struct
+from .base import Struct, field
 from .common import (
 	Py_GIL_DISABLED,
 	Py_hash_t,
@@ -34,16 +34,16 @@ class PyDictObject(Struct):
 
 
 class PyDictKeyEntry(Struct):
-	_fields_ = [("me_hash", Py_hash_t), ("me_key", PyObject_p), ("me_value", PyObject_p)]
+	me_hash = field(Py_hash_t)
+	me_key = field(PyObject_p)
+	me_value = field(PyObject_p)
 
 
 if sys.version_info >= (3, 11):
 
 	class PyDictUnicodeEntry(Struct):
-		_fields_ = [
-			("me_key", PyObject_p),
-			("me_value", PyObject_p),
-		]
+		me_key = field(PyObject_p)
+		me_value = field(PyObject_p)
 
 	class DictKeysKind(Enum):
 		DICT_KEYS_GENERAL = 0
@@ -120,14 +120,12 @@ else:
 		DKIX_EMPTY = -1
 		DKIX_DUMMY = -2
 		DKIX_ERROR = -3
-		_fields_ = [
-			("dk_refcnt", ctypes.c_ssize_t),
-			("dk_size", ctypes.c_ssize_t),
-			("dk_lookup", dict_lookup_func),
-			("dk_usable", ctypes.c_ssize_t),
-			("dk_nentries", ctypes.c_ssize_t),
-			("_dk_indices", ctypes.c_byte * 1),
-		]
+		dk_refcnt = field(ctypes.c_ssize_t)
+		dk_size = field(ctypes.c_ssize_t)
+		dk_lookup = field(dict_lookup_func)
+		dk_usable = field(ctypes.c_ssize_t)
+		dk_nentries = field(ctypes.c_ssize_t)
+		_dk_indices = field(ctypes.c_byte * 1)
 
 		@property
 		def indices_type(self):
@@ -155,7 +153,8 @@ else:
 
 
 class PyDictViewObject(Struct):
-	_fields_ = [("ob_base", PyObject), ("dv_dict", ctypes.POINTER(PyDictObject))]
+	ob_base = field(PyObject)
+	dv_dict = field(ctypes.POINTER(PyDictObject))
 
 
 # these aren't real structs, they're implemented w/ PyDictViewObject with a different ob_type

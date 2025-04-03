@@ -2,7 +2,7 @@ import ctypes
 import sys
 from enum import Enum
 
-from .base import Struct, Union
+from .base import Struct, Union, field
 from .common import Py_hash_t, PyObject, update_types
 
 
@@ -43,47 +43,40 @@ class PyAsciiObject(Struct, PyStrMixin):
 
 	class State(Struct):
 		if sys.version_info >= (3, 14):
-			_fields_ = [
-				("interned", ctypes.c_uint16),
-				("kind", ctypes.c_ushort, 3),
-				("compact", ctypes.c_ushort, 1),
-				("ascii", ctypes.c_ushort, 1),
-				("statically_allocated", ctypes.c_ushort, 1),
-				("_padding", ctypes.c_ushort, 10),
-			]
+			interned = field(ctypes.c_uint16)
+			kind = field(ctypes.c_ushort, 3)
+			compact = field(ctypes.c_ushort, 1)
+			ascii = field(ctypes.c_ushort, 1)
+			statically_allocated = field(ctypes.c_ushort, 1)
+			_padding = field(ctypes.c_ushort, 10)
+
 		elif sys.version_info >= (3, 12):
-			_fields_ = [
-				("interned", ctypes.c_uint, 2),
-				("kind", ctypes.c_uint, 3),
-				("compact", ctypes.c_uint, 1),
-				("ascii", ctypes.c_uint, 1),
-				("_padding", ctypes.c_uint, 25),
-			]
+			interned = field(ctypes.c_uint, 2)
+			kind = field(ctypes.c_uint, 3)
+			compact = field(ctypes.c_uint, 1)
+			ascii = field(ctypes.c_uint, 1)
+			_padding = field(ctypes.c_uint, 25)
+
 		else:
-			_fields_ = [
-				("interned", ctypes.c_uint, 2),
-				("kind", ctypes.c_uint, 3),
-				("compact", ctypes.c_uint, 1),
-				("ascii", ctypes.c_uint, 1),
-				("ready", ctypes.c_uint, 1),
-				("_padding", ctypes.c_uint, 24),
-			]
+			interned = field(ctypes.c_uint, 2)
+			kind = field(ctypes.c_uint, 3)
+			compact = field(ctypes.c_uint, 1)
+			ascii = field(ctypes.c_uint, 1)
+			ready = field(ctypes.c_uint, 1)
+			_padding = field(ctypes.c_uint, 24)
 
 	if sys.version_info >= (3, 12):
-		_fields_ = [
-			("ob_base", PyObject),
-			("length", ctypes.c_ssize_t),
-			("hash", Py_hash_t),
-			("state", State),
-		]
+		ob_base = field(PyObject)
+		length = field(ctypes.c_ssize_t)
+		hash = field(Py_hash_t)
+		state = field(State)
+
 	else:
-		_fields_ = [
-			("ob_base", PyObject),
-			("length", ctypes.c_ssize_t),
-			("hash", Py_hash_t),
-			("state", State),
-			("wstr", ctypes.c_wchar_p),
-		]
+		ob_base = field(PyObject)
+		length = field(ctypes.c_ssize_t)
+		hash = field(Py_hash_t)
+		state = field(State)
+		wstr = field(ctypes.c_wchar_p)
 
 	@property
 	def value(self):
@@ -112,18 +105,15 @@ class PyAsciiObject(Struct, PyStrMixin):
 
 class PyCompactUnicodeObject(Struct, PyStrMixin):
 	if sys.version_info >= (3, 12):
-		_fields_ = [
-			("_base", PyAsciiObject),
-			("utf8_length", ctypes.c_ssize_t),
-			("utf8", ctypes.c_char_p),
-		]
+		_base = field(PyAsciiObject)
+		utf8_length = field(ctypes.c_ssize_t)
+		utf8 = field(ctypes.c_char_p)
+
 	else:
-		_fields_ = [
-			("_base", PyAsciiObject),
-			("utf8_length", ctypes.c_ssize_t),
-			("utf8", ctypes.c_char_p),
-			("wstr_length", ctypes.c_ssize_t),
-		]
+		_base = field(PyAsciiObject)
+		utf8_length = field(ctypes.c_ssize_t)
+		utf8 = field(ctypes.c_char_p)
+		wstr_length = field(ctypes.c_ssize_t)
 
 	@property
 	def value(self):
@@ -135,14 +125,14 @@ class PyCompactUnicodeObject(Struct, PyStrMixin):
 
 class PyUnicodeObject(Struct, PyStrMixin):
 	class Data(Union):
-		_fields_ = [
-			("any", ctypes.c_void_p),
-			("latin1", ctypes.POINTER(CharType.Py_UCS1.type)),
-			("ucs2", ctypes.POINTER(CharType.Py_UCS2.type)),
-			("ucs4", ctypes.POINTER(CharType.Py_UCS4.type)),
-		]
+		any = field(ctypes.c_void_p)
 
-	_fields_ = [("_base", PyCompactUnicodeObject), ("data", Data)]
+		latin1 = field(ctypes.POINTER(CharType.Py_UCS1.type))
+		ucs2 = field(ctypes.POINTER(CharType.Py_UCS2.type))
+		ucs4 = field(ctypes.POINTER(CharType.Py_UCS4.type))
+
+	_base = field(PyCompactUnicodeObject)
+	data = field(Data)
 
 	@property
 	def value(self):
@@ -153,6 +143,7 @@ class PyUnicodeObject(Struct, PyStrMixin):
 		else:
 			arr_type = char_type.type * ascii_obj.length
 			field_addr = self.data.any
+			assert field_addr is not None
 			return arr_type.from_address(field_addr)
 
 

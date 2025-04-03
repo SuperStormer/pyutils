@@ -2,38 +2,56 @@ import ctypes
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, overload
 
+if TYPE_CHECKING:
+	import _ctypes
+	from typing import TypeVar
+
+	T = TypeVar("T")
+	U = TypeVar(
+		"U",
+		bound=_ctypes._Pointer[Any]  # noqa: SLF001
+		| _ctypes.CFuncPtr
+		| _ctypes.Union
+		| _ctypes.Structure
+		| _ctypes.Array[Any],
+	)
+
 
 @dataclass
 class Field:
 	type: type
+	bit_width: int | None
 
 
 @overload
-def field(c_type: "type[ctypes._SimpleCData[T]]") -> "T": ...
+def field(
+	c_type: "type[ctypes._SimpleCData[T]]", bit_width: int | None = None
+) -> "T": ...
 @overload
-def field(c_type: "type[U]") -> "U": ...
-def field(c_type: "type[ctypes._CDataType]") -> Any:
-	return Field(c_type)
+def field(c_type: "type[U]", bit_width: int | None = None) -> "U": ...
+def field(c_type: "type[ctypes._CDataType]", bit_width: int | None = None) -> Any:
+	return Field(c_type, bit_width)
+
+
+def init_fields(cls):
+	fields = [
+		(
+			(key, value.type, value.bit_width)
+			if value.bit_width is not None
+			else (key, value.type)
+		)
+		for key, value in cls.__dict__.items()
+		if isinstance(value, Field)
+	]
+	if fields:
+		print(fields)
+		cls._fields_ = fields
 
 
 class StructMeta(type(ctypes.Structure)):
 	def __init__(cls, name, base, attrs):
-		# print(cls, name, base, attrs)
 		super().__init__(name, base, attrs)
-		fields = [
-			(key, value.type)
-			for key, value in cls.__dict__.items()
-			if isinstance(value, Field)
-		]
-		if fields:
-			print(fields)
-			cls._fields_ = [
-				(
-					name,
-					typ,
-				)
-				for name, typ in fields
-			]
+		init_fields(cls)
 
 
 class Struct(ctypes.Structure, metaclass=StructMeta):
@@ -78,22 +96,13 @@ class Struct(ctypes.Structure, metaclass=StructMeta):
 			object.__setattr__(self, name, value)
 
 
-if TYPE_CHECKING:
-	import _ctypes
-	from typing import TypeVar
-
-	T = TypeVar("T")
-	U = TypeVar(
-		"U",
-		bound=_ctypes._Pointer[Any]
-		| _ctypes.CFuncPtr
-		| _ctypes.Union
-		| _ctypes.Structure
-		| _ctypes.Array[Any],
-	)
+class UnionMeta(type(ctypes.Union)):
+	def __init__(cls, name, base, attrs):
+		super().__init__(name, base, attrs)
+		init_fields(cls)
 
 
-class Union(ctypes.Union):
+class Union(ctypes.Union, metaclass=UnionMeta):
 	def __repr__(self):
 		cls = type(self)
 		fields = ",\n".join(

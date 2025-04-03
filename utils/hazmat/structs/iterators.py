@@ -2,7 +2,7 @@
 import ctypes
 import sys
 
-from .base import Struct
+from .base import Struct, field
 from .collections import PyListObject, PySetObject, PyTupleObject
 from .common import PyObject, PyObject_p, update_types
 from .dict import PyDictObject
@@ -17,11 +17,9 @@ class seqiterobject(Struct):
 	(from https://docs.python.org/3/c-api/iterator.html)
 	"""
 
-	_fields_ = [
-		("ob_base", PyObject),
-		("it_index", ctypes.c_ssize_t),
-		("it_seq", PyObject_p),
-	]
+	ob_base = field(PyObject)
+	it_index = field(ctypes.c_ssize_t)
+	it_seq = field(PyObject_p)
 
 	@property
 	def value(self):
@@ -45,11 +43,9 @@ class calliterobject(Struct):
 	(from https://docs.python.org/3/c-api/iterator.html)
 	"""
 
-	_fields_ = [
-		("ob_base", PyObject),
-		("it_callable", PyObject_p),
-		("it_sentinel", PyObject_p),
-	]
+	ob_base = field(PyObject)
+	it_callable = field(PyObject_p)
+	it_sentinel = field(PyObject_p)
 
 	@property
 	def callable(self):
@@ -60,11 +56,9 @@ class calliterobject(Struct):
 
 # https://github.com/python/cpython/blob/master/Objects/listobject.c
 class PyListIterObject(Struct):
-	_fields_ = [
-		("ob_base", PyObject),
-		("it_index", ctypes.c_ssize_t),
-		("it_seq", ctypes.POINTER(PyListObject)),
-	]
+	ob_base = field(PyObject)
+	it_index = field(ctypes.c_ssize_t)
+	it_seq = field(ctypes.POINTER(PyListObject))
 
 	@property
 	def value(self):
@@ -73,11 +67,9 @@ class PyListIterObject(Struct):
 
 # https://github.com/python/cpython/blob/main/Include/internal/pycore_tuple.h
 class PyTupleIterObject(Struct):
-	_fields_ = [
-		("ob_base", PyObject),
-		("it_index", ctypes.c_ssize_t),
-		("it_seq", ctypes.POINTER(PyTupleObject)),
-	]
+	ob_base = field(PyObject)
+	it_index = field(ctypes.c_ssize_t)
+	it_seq = field(ctypes.POINTER(PyTupleObject))
 
 	@property
 	def value(self):
@@ -86,13 +78,11 @@ class PyTupleIterObject(Struct):
 
 # https://github.com/python/cpython/blob/master/Objects/setobject.c
 class setiterobject(Struct):
-	_fields_ = [
-		("ob_base", PyObject),
-		("si_set", ctypes.POINTER(PySetObject)),
-		("si_used", ctypes.c_ssize_t),
-		("si_pos", ctypes.c_ssize_t),
-		("len", ctypes.c_ssize_t),
-	]
+	ob_base = field(PyObject)
+	si_set = field(ctypes.POINTER(PySetObject))
+	si_used = field(ctypes.c_ssize_t)
+	si_pos = field(ctypes.c_ssize_t)
+	len = field(ctypes.c_ssize_t)
 
 	@property
 	def value(self):
@@ -101,14 +91,12 @@ class setiterobject(Struct):
 
 # https://github.com/python/cpython/blob/master/Objects/dictobject.c
 class dictiterobject(Struct):
-	_fields_ = [
-		("ob_base", PyObject),
-		("di_dict", ctypes.POINTER(PyDictObject)),
-		("di_used", ctypes.c_ssize_t),
-		("di_pos", ctypes.c_ssize_t),
-		("di_result", PyObject_p),
-		("len", ctypes.c_ssize_t),
-	]
+	ob_base = field(PyObject)
+	di_dict = field(ctypes.POINTER(PyDictObject))
+	di_used = field(ctypes.c_ssize_t)
+	di_pos = field(ctypes.c_ssize_t)
+	di_result = field(PyObject_p)
+	len = field(ctypes.c_ssize_t)
 
 	@property
 	def value(self):
@@ -117,24 +105,20 @@ class dictiterobject(Struct):
 
 # https://github.com/python/cpython/blame/main/Include/internal/pycore_range.h
 class PyRangeIterObject(Struct):
-	_fields_ = [
-		("ob_base", PyObject),
-		("index", ctypes.c_long),
-		("start", ctypes.c_long),
-		("stop", ctypes.c_long),
-		("step", ctypes.c_long),
-		("length", ctypes.c_long),
-	]
+	ob_base = field(PyObject)
+	index = field(ctypes.c_long)
+	start = field(ctypes.c_long)
+	stop = field(ctypes.c_long)
+	step = field(ctypes.c_long)
+	length = field(ctypes.c_long)
 
 
 # https://github.com/python/cpython/blame/main/Objects/rangeobject.c
 class longrangeiterobject(Struct):
-	_fields_ = [
-		("ob_base", PyObject),
-		("_start", PyObject_p),
-		("_step", PyObject_p),
-		("_len", PyObject_p),
-	]
+	ob_base = field(PyObject)
+	_start = field(PyObject_p)
+	_step = field(PyObject_p)
+	_len = field(PyObject_p)
 
 
 for _field in ["index", "start", "stop", "step", "length"]:
@@ -150,7 +134,9 @@ del _get
 
 # https://github.com/python/cpython/blob/master/Python/bltinmodule.c
 class filterobject(Struct):
-	_fields_ = [("ob_base", PyObject), ("func", PyObject_p), ("it", PyObject_p)]
+	ob_base = field(PyObject)
+	func = field(PyObject_p)
+	it = field(PyObject_p)
 
 	@property
 	def value(self):
@@ -158,15 +144,11 @@ class filterobject(Struct):
 
 
 class mapobject(Struct):
+	ob_base = field(PyObject)
+	iters = field(PyObject_p)
+	func = field(PyObject_p)
 	if sys.version_info >= (3, 14):
-		_fields_ = [
-			("ob_base", PyObject),
-			("iters", PyObject_p),
-			("func", PyObject_p),
-			("strict", ctypes.c_int),
-		]
-	else:
-		_fields_ = [("ob_base", PyObject), ("iters", PyObject_p), ("func", PyObject_p)]
+		strict = field(ctypes.c_int)
 
 	@property
 	def value(self):
@@ -174,21 +156,12 @@ class mapobject(Struct):
 
 
 class zipobject(Struct):
+	ob_base = field(PyObject)
+	tuplesize = field(ctypes.c_ssize_t)
+	_ittuple = field(PyObject_p)
+	_result = field(PyObject_p)
 	if sys.version_info >= (3, 10):
-		_fields_ = [
-			("ob_base", PyObject),
-			("tuplesize", ctypes.c_ssize_t),
-			("_ittuple", PyObject_p),
-			("_result", PyObject_p),
-			("strict", ctypes.c_int),
-		]
-	else:
-		_fields_ = [
-			("ob_base", PyObject),
-			("tuplesize", ctypes.c_ssize_t),
-			("_ittuple", PyObject_p),
-			("_result", PyObject_p),
-		]
+		strict = field(ctypes.c_int)
 
 	@property
 	def ittuple(self):
@@ -205,30 +178,14 @@ class zipobject(Struct):
 class enumobject(Struct):
 	"""enumerate()"""
 
-	_fields_ = [
-		("ob_base", PyObject),
-		("en_index", ctypes.c_ssize_t),
-		("en_sit", PyObject_p),
-		("_en_result", PyObject_p),
-		("_en_longindex", PyObject_p),
-	]
+	ob_base = field(PyObject)
+	en_index = field(ctypes.c_ssize_t)
+	en_sit = field(PyObject_p)
+	_en_result = field(PyObject_p)
+	_en_longindex = field(PyObject_p)
+
 	if sys.version_info >= (3, 11):
-		_fields_ = [
-			("ob_base", PyObject),
-			("en_index", ctypes.c_ssize_t),
-			("en_sit", PyObject_p),
-			("_en_result", PyObject_p),
-			("_en_longindex", PyObject_p),
-			("one", PyObject_p),
-		]
-	else:
-		_fields_ = [
-			("ob_base", PyObject),
-			("en_index", ctypes.c_ssize_t),
-			("en_sit", PyObject_p),
-			("_en_result", PyObject_p),
-			("_en_longindex", PyObject_p),
-		]
+		one = field(PyObject_p)
 
 	@property
 	def en_result(self):
@@ -244,7 +201,9 @@ class enumobject(Struct):
 
 
 class reversedobject(Struct):
-	_fields_ = [("ob_base", PyObject), ("index", ctypes.c_ssize_t), ("seq", PyObject_p)]
+	ob_base = field(PyObject)
+	index = field(ctypes.c_ssize_t)
+	seq = field(PyObject_p)
 
 	@property
 	def value(self):

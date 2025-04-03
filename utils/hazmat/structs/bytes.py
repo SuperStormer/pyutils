@@ -1,24 +1,22 @@
 import ctypes
 from enum import Flag
 
+from .base import Struct, field
 from .common import (
 	Py_buffer,
 	Py_hash_t,
 	PyObject,
 	PyObject_p,
 	PyVarObject,
-	Struct,
 	update_types,
 )
 
 
 # https://github.com/python/cpython/blob/master/Include/cpython/bytesobject.h
 class PyBytesObject(Struct):
-	_fields_ = [
-		("ob_base", PyVarObject),
-		("ob_shash", Py_hash_t),
-		("_ob_sval", ctypes.c_char * 1),
-	]
+	ob_base = field(PyVarObject)
+	ob_shash = field(Py_hash_t)
+	_ob_sval = field(ctypes.c_char * 1)
 
 	@property
 	def ob_sval(self):
@@ -29,13 +27,11 @@ class PyBytesObject(Struct):
 
 # https://github.com/python/cpython/blob/master/Include/cpython/bytearrayobject.h
 class PyByteArrayObject(Struct):
-	_fields_ = [
-		("ob_base", PyVarObject),
-		("ob_alloc", ctypes.c_ssize_t),
-		("ob_bytes", ctypes.c_char_p),
-		("ob_start", ctypes.c_char_p),
-		("ob_exports", ctypes.c_ssize_t),
-	]
+	ob_base = field(PyVarObject)
+	ob_alloc = field(ctypes.c_ssize_t)
+	ob_bytes = field(ctypes.c_char_p)
+	ob_start = field(ctypes.c_char_p)
+	ob_exports = field(ctypes.c_ssize_t)
 
 	@property
 	def value(self):
@@ -56,12 +52,10 @@ class PyManagedBufferObject(Struct):
 		RELEASED = 1
 		FREE_FORMAT = 2
 
-	_fields_ = [
-		("ob_base", PyObject),
-		("flags", ctypes.c_int),
-		("exports", ctypes.c_ssize_t),
-		("master", Py_buffer),
-	]
+	ob_base = field(PyObject)
+	flags = field(ctypes.c_int)
+	exports = field(ctypes.c_ssize_t)
+	master = field(Py_buffer)
 
 
 class PyMemoryViewObject(Struct):
@@ -72,16 +66,14 @@ class PyMemoryViewObject(Struct):
 		SCALAR = 8
 		PIL = 16
 
-	_fields_ = [
-		("ob_base", PyVarObject),
-		("mbuf", ctypes.POINTER(PyManagedBufferObject)),
-		("hash", Py_hash_t),
-		("flags", ctypes.c_int),
-		("exports", ctypes.c_ssize_t),
-		("view", Py_buffer),
-		("weakreflist", PyObject_p),
-		("ob_array", (ctypes.c_ssize_t * 1)),
-	]
+	ob_base = field(PyVarObject)
+	mbuf = field(ctypes.POINTER(PyManagedBufferObject))
+	hash = field(Py_hash_t)
+	flags = field(ctypes.c_int)
+	exports = field(ctypes.c_ssize_t)
+	view = field(Py_buffer)
+	weakreflist = field(PyObject_p)
+	ob_array = field(ctypes.c_ssize_t * 1)
 
 	def get_buffer(self, item_type=ctypes.c_char):
 		return (item_type * (self.view.len // ctypes.sizeof(item_type))).from_address(
