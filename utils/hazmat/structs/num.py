@@ -8,7 +8,7 @@ from .common import PyObject, PyVarObject, update_types
 # https://github.com/python/cpython/blob/master/Include/cpython/longintrepr.h
 # credit to Crowthebird#1649 (<@!675937585624776717>) for digit size check
 if sys.version_info >= (3, 12):
-	# FIXME _digit_size check for 3.12+
+	# TODO _digit_size check for 3.12+
 	_digit_size = 0
 else:
 	_digit_size = PyVarObject.from_object(32768).ob_size - 1
@@ -27,7 +27,7 @@ if sys.version_info >= (3, 12):
 
 		@property
 		def ob_digit(self):
-			return self.get_vla("_ob_digit", _digit_type, abs(self.ob_base.ob_size))
+			return self.get_vla("_ob_digit", _digit_type, self.ndigits)
 
 		@property
 		def ndigits(self):
@@ -47,7 +47,7 @@ if sys.version_info >= (3, 12):
 			return sign * value
 
 		@value.setter
-		def value(self, val):
+		def value(self, val: int):
 			val = abs(val)
 			digits = []
 			while val > 0:
@@ -56,7 +56,7 @@ if sys.version_info >= (3, 12):
 			if len(digits) > abs(self.ndigits):
 				warnings.warn(
 					f"Number of digits ({len(digits)}) is greater than current ({self.ndigits})",
-					stacklevel=2,
+					stacklevel=3,
 				)
 			sign_bits = 0 if val > 0 else 1 if val == 0 else 2
 			self.lv_tag = (len(digits) << PyLong_NON_SIZE_BITS) | sign_bits
@@ -71,6 +71,14 @@ if sys.version_info >= (3, 12):
 		ob_base = field(PyObject)
 		long_value = field(PyLongValue)
 
+		@property
+		def value(self):
+			return self.long_value.value
+
+		@value.setter
+		def value(self, val: int):
+			self.long_value.value = val
+
 else:
 
 	class PyLongObject(Struct):
@@ -79,11 +87,11 @@ else:
 
 		@property
 		def ob_digit(self):
-			return self.get_vla("_ob_digit", _digit_type, abs(self.ob_base.ob_size))
+			return self.get_vla("_ob_digit", _digit_type, self.ndigits)
 
 		@property
 		def ndigits(self):
-			return self.ob_base.ob_size
+			return abs(self.ob_base.ob_size)
 
 		@property
 		def value(self):
@@ -97,17 +105,17 @@ else:
 			return sign * value
 
 		@value.setter
-		def value(self, val):
+		def value(self, val: int):
 			sign = 1 if val > 0 else -1
 			val = abs(val)
 			digits = []
 			while val > 0:
 				digits.append(val & PyLong_MASK)
 				val >>= PyLong_SHIFT
-			if len(digits) > abs(self.ob_base.ob_size):
+			if len(digits) > self.ndigits:
 				warnings.warn(
-					f"Number of digits ({len(digits)}) is greater than current ({self.ob_base.ob_size})",
-					stacklevel=2,
+					f"Number of digits ({len(digits)}) is greater than current ({self.ndigits})",
+					stacklevel=3,
 				)
 			self.ob_base.ob_size = len(digits) * sign
 			ctypes.memmove(

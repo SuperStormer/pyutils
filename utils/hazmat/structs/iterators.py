@@ -2,7 +2,7 @@
 import ctypes
 import sys
 
-from .base import Struct, field
+from .base import Struct, field, field_alias
 from .collections import PyListObject, PySetObject, PyTupleObject
 from .common import PyObject, PyObject_p, update_types
 from .dict import PyDictObject
@@ -120,16 +120,10 @@ class longrangeiterobject(Struct):
 	_step = field(PyObject_p)
 	_len = field(PyObject_p)
 
-
-for _field in ["index", "start", "stop", "step", "length"]:
-
-	@property
-	def _get(self, field=_field):  # noqa: PLR0206
-		return ctypes.cast(getattr(self, "_" + field), ctypes.POINTER(PyLongObject))[0]
-
-	setattr(longrangeiterobject, _field, _get)
-del _field
-del _get
+	start = field_alias("_start", PyLongObject)
+	stop = field_alias("_stop", PyLongObject)
+	step = field_alias("_step", PyLongObject)
+	len = field_alias("_len", PyLongObject)
 
 
 # https://github.com/python/cpython/blob/master/Python/bltinmodule.c
@@ -163,13 +157,8 @@ class zipobject(Struct):
 	if sys.version_info >= (3, 10):
 		strict = field(ctypes.c_int)
 
-	@property
-	def ittuple(self):
-		return ctypes.cast(self._ittuple, ctypes.POINTER(PyTupleObject))[0]
-
-	@property
-	def result(self):
-		return ctypes.cast(self._result, ctypes.POINTER(PyTupleObject))[0]
+	ittuple = field_alias("_ittuple", PyTupleObject)
+	result = field_alias("_result", PyTupleObject)
 
 	value = ittuple
 
@@ -187,13 +176,8 @@ class enumobject(Struct):
 	if sys.version_info >= (3, 11):
 		one = field(PyObject_p)
 
-	@property
-	def en_result(self):
-		return ctypes.cast(self._en_result, ctypes.POINTER(PyTupleObject))[0]
-
-	@property
-	def en_longindex(self):
-		return ctypes.cast(self._en_longindex, ctypes.POINTER(PyLongObject))[0]
+	en_result = field_alias("_en_result", PyTupleObject)
+	_en_longindex = field_alias("_en_longindex", PyLongObject)
 
 	@property
 	def value(self):

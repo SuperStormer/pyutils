@@ -33,6 +33,13 @@ def field(c_type: "type[ctypes._CDataType]", bit_width: int | None = None) -> An
 	return Field(c_type, bit_width)
 
 
+def field_alias(field: str, c_type: "type[ctypes._CDataType]"):
+	def getter(self):
+		return ctypes.cast(getattr(self, field), ctypes.POINTER(c_type)).contents
+
+	return property(getter)
+
+
 def init_fields(cls):
 	fields = [
 		(
@@ -44,7 +51,6 @@ def init_fields(cls):
 		if isinstance(value, Field)
 	]
 	if fields:
-		print(fields)
 		cls._fields_ = fields
 
 
@@ -57,10 +63,14 @@ class StructMeta(type(ctypes.Structure)):
 class Struct(ctypes.Structure, metaclass=StructMeta):
 	def __repr__(self):
 		cls = type(self)
-		fields = ",\n".join(
-			f"{field[0]}={getattr(self, field[0])}" for field in cls._fields_
-		)
-		return f"{cls.__name__}(\n{fields})"
+		field_reprs = []
+		for field in cls._fields_:
+			attr = field[0]
+			if attr.startswith("_") and hasattr(self, attr[1:]):
+				attr = attr[1:]
+			val = getattr(self, attr)
+			field_reprs.append(f"{attr}={val}")
+		return f"{cls.__name__}(\n{',\n'.join(field_reprs)})"
 
 	def get_vla(self, field, typ, size):
 		return (typ * size).from_address(

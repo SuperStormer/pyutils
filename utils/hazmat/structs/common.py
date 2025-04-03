@@ -478,6 +478,10 @@ from .dict import PyDictKeysObject  # noqa: E402
 
 
 # https://github.com/python/cpython/blob/master/Include/cpython/object.h
+class specialization_cache(Struct):
+	getitem = field(PyObject_p)
+
+
 class PyHeapTypeObject(Struct):
 	ht_type = field(PyTypeObject)
 	as_async = field(PyAsyncMethods)
@@ -489,8 +493,16 @@ class PyHeapTypeObject(Struct):
 	ht_slots = field(PyObject_p)
 	ht_qualname = field(PyObject_p)
 	ht_cached_keys = field(ctypes.POINTER(PyDictKeysObject))
-
-	# TODO update
+	if sys.version_info >= (3, 9):
+		ht_module = field(PyObject_p)
+	if sys.version_info >= (3, 11):
+		_ht_tpname = field(ctypes.c_char_p)
+	if sys.version_info >= (3, 14):
+		ht_token = field(ctypes.c_void_p)
+	if sys.version_info >= (3, 11):
+		_spec_cache = field(specialization_cache)
+	if Py_GIL_DISABLED:
+		unique_id = field(ctypes.c_ssize_t)
 
 
 # misc

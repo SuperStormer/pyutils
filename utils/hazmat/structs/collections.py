@@ -3,7 +3,7 @@ import sys
 
 from utils.hazmat.misc import get_addr
 
-from .base import Struct, field
+from .base import Struct, field, field_alias
 from .common import Py_hash_t, PyObject, PyObject_p, PyVarObject, update_types
 from .num import PyLongObject
 
@@ -75,16 +75,11 @@ class rangeobject(Struct):  # noqa: N801
 	_step = field(PyObject_p)
 	_length = field(PyObject_p)
 
+	start = field_alias("_start", PyLongObject)
+	stop = field_alias("_stop", PyLongObject)
+	step = field_alias("_step", PyLongObject)
+	length = field_alias("_length", PyLongObject)
 
-for _field in ["start", "stop", "step", "length"]:
-
-	@property
-	def _get(self, field=_field):  # noqa: PLR0206
-		return ctypes.cast(getattr(self, "_" + field), ctypes.POINTER(PyLongObject))[0]
-
-	setattr(rangeobject, _field, _get)
-del _field
-del _get
 
 update_types({
 	list: PyListObject,

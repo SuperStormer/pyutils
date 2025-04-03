@@ -1,4 +1,5 @@
 import ctypes
+import warnings
 from enum import Flag
 
 from .base import Struct, field
@@ -22,7 +23,23 @@ class PyBytesObject(Struct):
 	def ob_sval(self):
 		return self.get_vla("_ob_sval", ctypes.c_char, self.ob_base.ob_size)
 
-	value = ob_sval
+	@ob_sval.setter
+	def ob_sval(self, val):
+		self.ob_sval.value = val
+
+	@property
+	def value(self):
+		return self.ob_sval
+
+	@value.setter
+	def value(self, val):
+		if len(val) > self.ob_base.ob_size:
+			warnings.warn(
+				f"Length ({len(val)}) is greater than current ({self.ob_base.ob_size})",
+				stacklevel=3,
+			)
+		self.ob_base.ob_size = len(val)
+		self.ob_sval = val
 
 
 # https://github.com/python/cpython/blob/master/Include/cpython/bytearrayobject.h
@@ -39,8 +56,13 @@ class PyByteArrayObject(Struct):
 
 	@value.setter
 	def value(self, val):
-		self.ob_start = val
+		if len(val) > self.ob_base.ob_size:
+			warnings.warn(
+				f"Length ({len(val)}) is greater than current ({self.ob_base.ob_size})",
+				stacklevel=3,
+			)
 		self.ob_base.ob_size = len(val)
+		self.ob_start = val
 
 
 # https://github.com/python/cpython/blob/master/Include/memoryobject.h
