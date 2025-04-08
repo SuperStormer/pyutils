@@ -8,7 +8,7 @@ weak_keys = [
 ]
 
 
-def all_weak_keys(ciphertext, iv):
+def all_weak_keys(ciphertext: bytes | bytearray, iv: bytes | bytearray):
 	return [
 		(DES.new(key, DES.MODE_OFB, iv).decrypt(ciphertext), key) for key in weak_keys
 	]

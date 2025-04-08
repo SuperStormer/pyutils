@@ -7,31 +7,31 @@ from ..num.ntheory import lcm
 from .misc import bytes_to_long, long_to_bytes
 
 
-def L(x, n):  # noqa: N802
+def L(x: int, n: int):  # noqa: N802
 	return (x - 1) // n
 
 
-def private_key(p, q, g):
+def private_key(p: int, q: int, g: int):
 	n = p * q
 	lamb = lcm(p - 1, q - 1)
 	mu = pow(L(pow(g, lamb, n**2), n), -1, n)
 	return (lamb, mu)
 
 
-def decrypt(c, n, lamb, mu):
+def decrypt(c: int, n: int, lamb: int, mu: int):
 	return (L(pow(c, lamb, n**2), n) * mu) % n
 
 
-def encrypt(m, n, g):
+def encrypt(m: int, n: int, g: int):
 	r = -1
 	while math.gcd(r, n) != 1 and r != 0:
 		r = secrets.randbelow(n)
 	return (pow(g, m, n**2) * pow(r, n, n**2)) % n**2
 
 
-def decrypt_to_str(c, n, lamb, mu):
+def decrypt_to_str(c: int, n: int, lamb: int, mu: int):
 	return long_to_bytes(decrypt(c, n, lamb, mu))
 
 
-def encrypt_str(m, n, g):
+def encrypt_str(m: bytes | bytearray, n: int, g: int):
 	return encrypt(bytes_to_long(m), n, g)

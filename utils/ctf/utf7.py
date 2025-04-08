@@ -1,8 +1,9 @@
 import base64
 import string
 
+
 # https://blog.arkark.dev/2022/11/18/seccon-en/#misc-latexipy
-def utf7_encode(s, safe_charset=None):
+def utf7_encode(s: str, safe_charset: str | None = None):
 	if safe_charset is None:
 		safe_charset = string.ascii_letters + string.digits + "'(),-./:?"
 

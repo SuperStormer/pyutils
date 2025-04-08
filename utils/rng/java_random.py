@@ -3,10 +3,10 @@ ADDEND = 0xB
 
 
 class JavaRandom:
-	def __init__(self, seed):
+	def __init__(self, seed: int):
 		self.seed = seed
 
-	def next(self, bits=32):
+	def next(self, bits: int = 32):
 		self.seed = (self.seed * MULTIPLIER + ADDEND) & ((1 << 48) - 1)
 		res = self.seed >> (48 - bits)
 		# deal with java's signed ints
@@ -18,7 +18,7 @@ class JavaRandom:
 	rand = next
 
 	# all of the following were translated from https://docs.oracle.com/javase/8/docs/api/java/util/Random.html
-	def next_int(self, bound=None):
+	def next_int(self, bound: int | None = None):
 		if bound is None:
 			return self.next(32)
 		if bound <= 0:
@@ -50,7 +50,7 @@ class JavaRandom:
 
 
 # https://github.com/fta2012/ReplicatedRandom/blob/master/ReplicatedRandom.java#L32
-def find_seed(x, y, n=32, m=32):
+def find_seed(x: int, y: int, n: int = 32, m: int = 32):
 	"""
 	find seed based on two next() calls where x = next(n) and y = next(m)
 	defaults to n = m = 32 (for two nextInts)
@@ -75,7 +75,7 @@ def find_seed(x, y, n=32, m=32):
 
 
 # https://stackoverflow.com/q/32324404
-def find_seed_long(l):
+def find_seed_long(l: int):
 	"""find seed based on one nextLong() call"""
 	y = l & 0xFFFFFFFF
 	x = (l - y) >> 32
@@ -83,13 +83,13 @@ def find_seed_long(l):
 
 
 # https://github.com/fta2012/ReplicatedRandom/blob/master/ReplicatedRandom.java#L28
-def find_seed_float(x, y):
-	"""find seed based on one nextFloat() call"""
+def find_seed_float(x: float, y: float):
+	"""find seed based on two nextFloat() calls"""
 	return find_seed(int(x * (1 << 24)), int(y * (1 << 24)), 24, 24)
 
 
 # https://github.com/fta2012/ReplicatedRandom/blob/master/ReplicatedRandom.java#L6
-def find_seed_double(d):
+def find_seed_double(d: float):
 	"""find seed based on one nextDouble() call (or Math.random())"""
 	numerator = int(d * (1 << 53))
 	first26 = numerator >> 27
@@ -98,15 +98,17 @@ def find_seed_double(d):
 
 
 # https://stackoverflow.com/q/32324404
-def prev_seed(seed):
+def prev_seed(seed: int):
 	"""find the previous seed given the current seed"""
 	inv_multiplier = 0xDFE05BCB1365
 	mask = 0xFFFFFFFFFFFF
 	return ((seed - ADDEND) * inv_multiplier) & mask
 
 
-def copy_random(x, y):
+def copy_random(x: int, y: int):
 	"""from 2 randInt calls"""
 	seed = find_seed(x, y)
+	if seed is None:
+		raise RuntimeError("C")
 	rand = JavaRandom(seed)
 	return rand

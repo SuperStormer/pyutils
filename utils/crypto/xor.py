@@ -1,4 +1,5 @@
 import itertools
+from collections.abc import Iterable
 from typing import NamedTuple
 
 from utils.itertools2 import grouper
@@ -11,26 +12,28 @@ class XorResult(NamedTuple):
 	key: bytes
 
 
-def xor(s, t) -> bytes:
+def xor(s: Iterable[int], t: Iterable[int]) -> bytes:
 	return bytes(a ^ b for a, b in zip(s, t))
 
 
-def one_byte_xor_all(s: bytes):
+def one_byte_xor_all(s: bytes | bytearray):
 	return (XorResult(xor(s, itertools.repeat(c)), bytes([c])) for c in range(256))
 
 
-def decrypt_one_byte_xor(s: bytes) -> XorResult:
+def decrypt_one_byte_xor(s: bytes | bytearray) -> XorResult:
 	return max(
 		one_byte_xor_all(s),
 		key=lambda x: english_like(x.text.decode("utf-8", errors="ignore")),
 	)
 
 
-def repeating_key_xor(s, k):
+def repeating_key_xor(s: bytes | bytearray, k: bytes | bytearray):
 	return xor(s, itertools.cycle(k))
 
 
-def repeating_key_xor_all(s, min_len=2, max_len=40, keysizes_to_try=3) -> list[XorResult]:
+def repeating_key_xor_all(
+	s: bytes | bytearray, min_len=2, max_len=40, keysizes_to_try=3
+) -> list[XorResult]:
 	# average hamming distance of first 4 key_size len chunks
 	key_sizes = sorted(
 		range(min_len, max_len + 1),
@@ -49,7 +52,9 @@ def repeating_key_xor_all(s, min_len=2, max_len=40, keysizes_to_try=3) -> list[X
 	return keys
 
 
-def decrypt_repeating_key_xor(s, min_len=2, max_len=40, keysizes_to_try=3):
+def decrypt_repeating_key_xor(
+	s: bytes | bytearray, min_len=2, max_len=40, keysizes_to_try=3
+):
 	return max(
 		repeating_key_xor_all(s, min_len, max_len, keysizes_to_try),
 		key=lambda x: english_like(x[0].decode("utf-8", errors="ignore")),

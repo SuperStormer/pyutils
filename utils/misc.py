@@ -1,13 +1,13 @@
-def is_palindrome(s):
+def is_palindrome(s: str):
 	return s == "".join(reversed(s))
 
 
-def rotations(n):
+def rotations(n: list):
 	for i in range(len(n)):
 		yield n[i:] + n[:i]
 
 
-def num_to_word(n):
+def num_to_word(n: int):
 	ones = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
 	teens = [
 		"ten",

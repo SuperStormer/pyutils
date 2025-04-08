@@ -1,5 +1,6 @@
 import random
 import warnings
+from collections.abc import Callable, Iterable
 
 from utils.bits import lowest_bits
 
@@ -18,7 +19,7 @@ class MersenneTwister:
 		self.mt = [0 for _ in range(self.n)]
 		self.index = self.n + 1
 
-	def seed(self, seed):
+	def seed(self, seed: int):
 		self.index = self.n
 		self.mt[0] = seed
 		for i in range(1, self.n):
@@ -26,7 +27,7 @@ class MersenneTwister:
 				self.f * (self.mt[i - 1] ^ (self.mt[i - 1] >> (self.w - 2))) + i, self.w
 			)
 
-	def python_seed(self, n):
+	def python_seed(self, n: int):
 		"""python has some extra steps compared to classical MT
 		see random_seed in https://github.com/python/cpython/blob/master/Modules/_randommodule.c"""
 		# convert arbitary sized python int into array of 32-bit ints
@@ -35,9 +36,9 @@ class MersenneTwister:
 		while n:
 			key.append(lowest_bits(n, self.w))
 			n >>= self.w
-		self.init_by_array(key)
+		self._init_by_array(key)
 
-	def init_by_array(self, key):
+	def _init_by_array(self, key: list[int]):
 		"""see init_by_array in https://github.com/python/cpython/blob/master/Modules/_randommodule.c"""
 		self.seed(19650218)
 		i = 1
@@ -72,7 +73,7 @@ class MersenneTwister:
 		if self.index >= self.n:
 			if self.index > self.n:
 				self.seed(5489)
-			self.twist()
+			self._twist()
 		y = self.mt[self.index]
 		y ^= (y >> self.u) & self.d
 		y ^= (y << self.s) & self.b
@@ -81,7 +82,7 @@ class MersenneTwister:
 		self.index += 1
 		return lowest_bits(y, self.w)
 
-	def twist(self):
+	def _twist(self):
 		for i in range(self.n):
 			x = (self.mt[i] & self.upper_mask) + (
 				self.mt[(i + 1) % self.n] & self.lower_mask
@@ -101,14 +102,14 @@ class MersenneTwister:
 
 
 # both funcs below from https://cypher.codes/writing/cryptopals-challenge-set-3
-def unshift_right_xor(value, shift):
+def _unshift_right_xor(value: int, shift: int):
 	result = 0
 	for i in range(32 // shift + 1):
 		result ^= value >> (shift * i)
 	return result
 
 
-def unshift_left_mask_xor(value, shift, mask):
+def _unshift_left_mask_xor(value: int, shift: int, mask: int):
 	result = 0
 	for i in range(32 // shift + 1):
 		part_mask = (0xFFFFFFFF >> (32 - shift)) << (shift * i)
@@ -118,22 +119,22 @@ def unshift_left_mask_xor(value, shift, mask):
 	return result
 
 
-def untemper(y):
+def _untemper(y: int):
 	u, d = 11, 0xFFFFFFFF
 	s, b = 7, 0x9D2C5680
 	t, c = 15, 0xEFC60000
 	l = 18
-	y = unshift_right_xor(y, l)
-	y = unshift_left_mask_xor(y, t, c)
-	y = unshift_left_mask_xor(y, s, b)
-	y = unshift_right_xor(y, u)
+	y = _unshift_right_xor(y, l)
+	y = _unshift_left_mask_xor(y, t, c)
+	y = _unshift_left_mask_xor(y, s, b)
+	y = _unshift_right_xor(y, u)
 	return y
 
 
-def copy_mersenne_twister(vals):
+def copy_mersenne_twister(vals: Iterable[int]):
 	"""from a list of 624 32-bit ints"""
 	vals = list(vals)
-	state = list(map(untemper, vals))[:624]
+	state = list(map(_untemper, vals))[:624]
 	rand = MersenneTwister()
 	if len(vals) > 624:
 		# if there's more than 624 values, we can recover the index
@@ -158,12 +159,12 @@ def copy_mersenne_twister(vals):
 	return rand
 
 
-def copy_mersenne_twister2(rand):
+def copy_mersenne_twister2(rand: Callable[[], int]):
 	vals = [rand() for i in range(624)]
 	return copy_mersenne_twister(vals)
 
 
-def copy_mersenne_twister3(n):
+def copy_mersenne_twister3(n: int):
 	"""from the result of random.getrandbits(624 * 32)"""
 	vals = []
 	while n > 0:

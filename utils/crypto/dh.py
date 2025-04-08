@@ -16,11 +16,11 @@ defaults = {
 }
 
 
-def public_key(g, a, p):
+def public_key(g: int, a: int, p: int):
 	"""g is the base, a is the private key, p is the modulus"""
 	return pow(g, a, p)
 
 
-def shared_secret(a, B, p):  # noqa: N803
+def shared_secret(a: int, B: int, p: int):  # noqa: N803
 	"""a is your private key, B is partner's public key, p is the modulus"""
 	return pow(B, a, p)

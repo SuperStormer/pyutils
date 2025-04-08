@@ -19,6 +19,7 @@ from utils.crypto.xor import *
 from utils.ctf.blind_sqli import (
 	blind_sqli,
 	blind_sqli_async,
+	blind_sqli_bsearch,
 	blind_sqli_payload,
 	blind_sqli_payloads,
 	default_chars,

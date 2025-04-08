@@ -14,7 +14,7 @@ def decrypt_ecb_suffix(oracle):
 	# see cryptopals #12/#14
 	block_size: int = detect_blocksize(oracle)
 	if not detect_ecb(oracle):
-		raise ValueError("oracle not using ecb")
+		raise RuntimeError("oracle not using ecb")
 	# get prefix length
 	common_prefix = None
 	prefix_len = None
@@ -30,7 +30,7 @@ def decrypt_ecb_suffix(oracle):
 			continue
 		break
 	if common_prefix is None:
-		raise ValueError("Couldn't find prefix length")
+		raise RuntimeError("Couldn't find prefix length")
 	assert prefix_len is not None
 	length = round_to_multiple(len(oracle(common_prefix)) - prefix_len, block_size)
 	known = bytearray()

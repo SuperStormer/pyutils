@@ -51,7 +51,7 @@ def nth_fib_binet(n: int) -> int:
 	return round((phi**n - (1 - phi) ** n) / (5**0.5))
 
 
-def collatz(n):
+def collatz(n: int):
 	while n != 1:
 		yield n
 		if n % 2 == 0:

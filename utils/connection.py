@@ -5,6 +5,7 @@ import socket
 import subprocess
 import time
 from abc import ABC, abstractmethod
+from typing import Any
 
 
 class Connection(ABC):
@@ -12,16 +13,16 @@ class Connection(ABC):
 		self.buffer = b""
 
 	@abstractmethod
-	def recv_raw(self, timeout) -> bytes:
+	def recv_raw(self, timeout: float) -> bytes:
 		pass
 
-	def recv(self, timeout=0.2) -> str:
+	def recv(self, timeout: float = 0.2) -> str:
 		self.buffer += self.recv_raw(timeout)
 		buffer = self.buffer
 		self.buffer = b""
 		return buffer.decode("utf-8")
 
-	def recvline(self, timeout=0.2) -> str:
+	def recvline(self, timeout: float = 0.2) -> str:
 		start_time = time.time()
 		while b"\n" not in self.buffer and time.time() < start_time + timeout:
 			self.buffer += self.recv_raw(timeout)
@@ -30,7 +31,7 @@ class Connection(ABC):
 		self.buffer = self.buffer[i + 1 :]
 		return buffer.decode("utf-8")
 
-	def recvlines(self, n):
+	def recvlines(self, n: int):
 		return [self.recvline() for _ in range(n)]
 
 	@abstractmethod
@@ -45,7 +46,7 @@ class Connection(ABC):
 			self.sendline(s)
 
 	@abstractmethod
-	def __enter__(self):
+	def __enter__(self) -> Any:
 		pass
 
 	@abstractmethod
@@ -94,7 +95,7 @@ class Socket(Connection):
 		self.read_size = 1024
 		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-	def recv_raw(self, timeout):
+	def recv_raw(self, timeout: float):
 		if not select.select([self.socket], [], [], timeout):
 			raise OSError("Socket is closed")
 		out = self.socket.recv(self.read_size)
@@ -119,7 +120,7 @@ class PwntoolsWrapper(Connection):
 		super().__init__()
 		self.tube = tube
 
-	def recv_raw(self, timeout):
+	def recv_raw(self, timeout: float):
 		return self.tube.recv(1024, timeout).decode("utf-8")
 
 	def send(self, s: str):

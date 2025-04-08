@@ -1,11 +1,12 @@
 import itertools
+from typing import Callable, Iterable, Sequence
 
 from utils.bits import rol
 from utils.crypto.xor import xor
 from utils.itertools2 import grouper
 
 
-def sha1_padding(msg, forced_len=None):
+def sha1_padding(msg: bytes | bytearray, forced_len: int | None = None):
 	if forced_len is None:
 		msg_len = len(msg) * 8
 	else:
@@ -20,7 +21,11 @@ def sha1_padding(msg, forced_len=None):
 	return msg
 
 
-def sha1(msg, state=None, msg_added_len=None):  # noqa: PLR0914
+def sha1(
+	msg: bytes | bytearray,
+	state: tuple[int, int, int, int, int] | None = None,
+	msg_added_len: int | None = None,
+):
 	if state is None:
 		h0 = 0x67452301
 		h1 = 0xEFCDAB89
@@ -80,7 +85,12 @@ def secret_prefix_mac(msg, key, hash_func=sha1):
 	return hash_func(key + msg)
 
 
-def sha1_hash_extension(orig_msg, new_msg, oracle, key_lens=None):
+def sha1_hash_extension(
+	orig_msg: bytes | bytearray,
+	new_msg: bytes | bytearray,
+	oracle: Callable[[bytes | bytearray], bytes | bytearray],
+	key_lens: Iterable[int] | None = None,
+):
 	orig_hash = oracle(orig_msg)
 	if key_lens is None:
 		key_lens = itertools.count(1)
@@ -89,15 +99,24 @@ def sha1_hash_extension(orig_msg, new_msg, oracle, key_lens=None):
 			key_len + len(orig_msg) :
 		]
 		msg_added_len = key_len + len(orig_msg) + len(glue_padding)
-		state = [int.from_bytes(c, byteorder="big") for c in grouper(orig_hash, 4)]
+		state = tuple(
+			int.from_bytes(c, byteorder="big")
+			for c in grouper(orig_hash, 4, incomplete="strict")
+		)
+		assert len(state) == 5
 		forged_mac = sha1(new_msg, state, msg_added_len)
 		forged_msg = orig_msg + glue_padding + new_msg
 		if oracle(forged_msg) == forged_mac:
 			return (forged_msg, forged_mac)
-	raise ValueError("No key_len is valid")
+	raise RuntimeError("No key_len is valid")
 
 
-def hmac(key, msg, hash_func, block_size=64):
+def hmac(
+	key: bytes | bytearray,
+	msg: bytes | bytearray,
+	hash_func: Callable[[bytes | bytearray], bytes | bytearray],
+	block_size: int = 64,
+):
 	if len(key) > block_size:
 		key = hash_func(key)
 	elif len(key) < block_size:

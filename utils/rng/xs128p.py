@@ -140,7 +140,7 @@ def get_state(doubles, browser):
 			print("WARNING: multiple solutions found! use more doubles!")
 		return state0, state1
 	else:
-		raise ValueError("unsat model")
+		raise RuntimeError("unsat model")
 
 
 def predict_rands(doubles, browser):

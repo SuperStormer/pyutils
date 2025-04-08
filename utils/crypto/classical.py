@@ -1,6 +1,6 @@
 import itertools
 import string
-from typing import NamedTuple
+from typing import Literal, NamedTuple
 
 from .misc import english_like
 
@@ -10,7 +10,7 @@ class CaesarResult(NamedTuple):
 	key: int
 
 
-def caesar_all(s, *, alphabet_only=True):
+def caesar_all(s: str, *, alphabet_only=True):
 	if alphabet_only:
 		return (
 			CaesarResult(caesar(s, i, alphabet_only=alphabet_only), i) for i in range(26)
@@ -21,7 +21,7 @@ def caesar_all(s, *, alphabet_only=True):
 		)
 
 
-def caesar(s, shift, *, alphabet_only=True):
+def caesar(s: str, shift: int, *, alphabet_only=True):
 	if alphabet_only:
 		return "".join(
 			chr((ord(c) + shift - 65) % 26 + 65)
@@ -37,13 +37,13 @@ def caesar(s, shift, *, alphabet_only=True):
 		)
 
 
-def decrypt_caesar(s, *, alphabet_only=True):
+def decrypt_caesar(s: str, *, alphabet_only=True):
 	return max(
 		caesar_all(s, alphabet_only=alphabet_only), key=lambda x: english_like(x[0])
 	)
 
 
-def vigenere(s, key, mode):
+def vigenere(s: str, key: str, mode: Literal["encrypt"] | Literal["decrypt"]):
 	key = key.lower()
 	if mode == "encrypt":
 		return "".join(

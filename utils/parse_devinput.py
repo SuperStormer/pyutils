@@ -2,6 +2,8 @@
 # based on https://ctftime.org/writeup/21148
 import string
 import struct
+from collections.abc import Mapping
+from typing import BinaryIO
 
 from .keycodes import key_codes
 
@@ -15,9 +17,15 @@ EVENT_SIZE = struct.calcsize(FORMAT)
 # keyboard layouts are dicts that map keynames to (normal,shift,alt gr) chars
 keyboard_layout_qwerty = {
 	**dict(
-		zip(string.ascii_uppercase, zip(string.ascii_lowercase, string.ascii_uppercase))
+		zip(
+			string.ascii_uppercase,
+			zip(string.ascii_lowercase, string.ascii_uppercase, strict=True),
+			strict=True,
+		)
 	),
-	**dict(zip(string.digits, zip(string.digits, ")!@#$%^&*("))),
+	**dict(
+		zip(string.digits, zip(string.digits, ")!@#$%^&*(", strict=True), strict=True)
+	),
 	"MINUS": ("-", "_"),
 	"EQUAL": ("=", "+"),
 	"LEFTBRACE": ("{", "["),
@@ -32,9 +40,19 @@ keyboard_layout_qwerty = {
 }
 keyboard_layout_azerty = {
 	**dict(
-		zip(string.ascii_uppercase, zip(string.ascii_lowercase, string.ascii_uppercase))
+		zip(
+			string.ascii_uppercase,
+			zip(string.ascii_lowercase, string.ascii_uppercase, strict=True),
+			strict=True,
+		)
 	),
-	**dict(zip(string.digits, zip("à&é\"'(-è_ç", string.digits, "@ ~#{[|`\\^"))),
+	**dict(
+		zip(
+			string.digits,
+			zip("à&é\"'(-è_ç", string.digits, "@ ~#{[|`\\^", strict=True),
+			strict=True,
+		),
+	),
 	"Q": ("a", "A"),
 	"W": ("z", "Z"),
 	"A": ("q", "Q"),
@@ -65,7 +83,10 @@ num_pad_map = {
 }
 
 
-def parse_devinput(in_file, keyboard_layout=None):
+def parse_devinput(
+	in_file: BinaryIO,
+	keyboard_layout: Mapping[str, tuple[str, str, str] | tuple[str, str]] | None = None,
+):
 	if keyboard_layout is None:
 		keyboard_layout = keyboard_layout_qwerty
 	out = []
@@ -111,7 +132,7 @@ def parse_devinput(in_file, keyboard_layout=None):
 							out.append("SHIFT" + key)
 					elif mode == 2:  # alt gr
 						if key in keyboard_layout and len(keyboard_layout[key]) > 2:
-							out.append(keyboard_layout[key][2])
+							out.append(keyboard_layout[key][2])  # type: ignore[reportGeneralTypeIssues]
 						else:
 							out.append("RIGHTALT" + key)
 				elif value == 0:  # release key

@@ -1,7 +1,7 @@
 from utils.num.misc import round_to_multiple
 
 
-def pad_pkcs7(s, block_size=16):
+def pad_pkcs7(s: bytes | bytearray, block_size: int = 16):
 	length = round_to_multiple(len(s), block_size)
 	pad_len = length - len(s)
 	if pad_len == 0:
@@ -9,7 +9,7 @@ def pad_pkcs7(s, block_size=16):
 	return s + bytes((pad_len,) * pad_len)
 
 
-def unpad_pkcs7(s):
+def unpad_pkcs7(s: bytes | bytearray):
 	pad_length = s[-1]
 	if all(c == pad_length for c in s[-pad_length:]):
 		return s[:-pad_length]

@@ -7,7 +7,11 @@ import json
 import math
 
 
-def non_json_jwt_encode(s: bytes, key, extra_headers=None):
+def non_json_jwt_encode(
+	s: bytes | bytearray,
+	key: bytes | bytearray,
+	extra_headers: dict[str, str] | None = None,
+):
 	header_dict = {"alg": "HS256", "typ": "JWT"}
 	if extra_headers is not None:
 		header_dict.update(extra_headers)
@@ -20,15 +24,15 @@ def non_json_jwt_encode(s: bytes, key, extra_headers=None):
 	return b".".join((header, payload, signature))
 
 
-def non_json_jwt_decode(token: bytes):
+def non_json_jwt_decode(token: bytes | bytearray):
 	header, token, _ = map(jwt_b64decode, token.split(b"."))
 	return json.loads(header), token
 
 
-def jwt_b64decode(s: bytes):
+def jwt_b64decode(s: bytes | bytearray):
 	padded_len = math.ceil(len(s) / 4) * 4
 	return base64.urlsafe_b64decode(s.ljust(padded_len, b"="))
 
 
-def jwt_b64encode(s: bytes):
+def jwt_b64encode(s: bytes | bytearray):
 	return base64.urlsafe_b64encode(s).rstrip(b"=")

@@ -1,11 +1,12 @@
 import string
+from typing import Iterable
 
 
-def long_to_bytes(x):
+def long_to_bytes(x: int):
 	return x.to_bytes((x.bit_length() + 7) // 8, byteorder="big")
 
 
-def bytes_to_long(x):
+def bytes_to_long(x: bytes | bytearray):
 	return int.from_bytes(x, byteorder="big")
 
 
@@ -46,7 +47,7 @@ def english_like(s: str) -> float:
 	return sum(letter_frequencies.get(c, 0) for c in s)
 
 
-def hamming(s: bytes, t: bytes):
+def hamming(s: Iterable[int], t: Iterable[int]):
 	dist = 0
 	for i, j in zip(s, t):
 		if i is None or j is None:

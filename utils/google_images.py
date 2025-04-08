@@ -20,7 +20,7 @@ class InvalidExtensionError(Exception):
 	pass
 
 
-def _parse_image_html(text, limit=15):
+def _parse_image_html(text: str, limit: int = 15) -> tuple[str]:
 	only_image_info = SoupStrainer("div")
 	soup = BeautifulSoup(text, "lxml", parse_only=only_image_info)
 	return tuple(
@@ -29,7 +29,12 @@ def _parse_image_html(text, limit=15):
 	)
 
 
-async def get_urls(keyword, limit=15, session=None, executor=None):
+async def get_urls(
+	keyword: str,
+	limit: int = 15,
+	session: aiohttp.ClientSession | None = None,
+	executor: ProcessPoolExecutor | None = None,
+):
 	async with contextlib.AsyncExitStack() as stack:
 		if session is None:
 			session = await stack.enter_async_context(aiohttp.ClientSession())
@@ -45,7 +50,7 @@ async def get_urls(keyword, limit=15, session=None, executor=None):
 			)
 
 
-async def _download_helper(path, url, session):
+async def _download_helper(path: str, url: str, session: aiohttp.ClientSession):
 	async with session.get(url) as response:
 		# from https://stackoverflow.com/q/29674905/7941251
 		content_type = response.headers["content-type"].partition(";")[0].strip()
@@ -80,7 +85,11 @@ async def _download_helper(path, url, session):
 
 
 async def download_images(
-	directory: str, keyword: str, limit: int = 15, session=None, executor=None
+	directory: str,
+	keyword: str,
+	limit: int = 15,
+	session: aiohttp.ClientSession | None = None,
+	executor: ProcessPoolExecutor | None = None,
 ):
 	if not os.path.exists(directory):
 		os.makedirs(directory)

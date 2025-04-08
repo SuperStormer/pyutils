@@ -14,7 +14,7 @@ def detect_blocksize(oracle) -> int:
 		encrypted = oracle(b"A" * i)
 		if len(encrypted) > initial_size:
 			return len(encrypted) - initial_size
-	raise ValueError("Could not detect block size")
+	raise RuntimeError("Could not detect block size")
 
 
 def detect_ecb(oracle):
